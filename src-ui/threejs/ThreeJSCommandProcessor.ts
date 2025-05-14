@@ -489,14 +489,7 @@ if (!geometry.index) {
       this.glViewer.scene.add(ambientLight);
       this.glViewer.scene.add(directionalLight);
 
-      // 强制渲染
-      if (this.glViewer.render) {
-        this.glViewer.render();
-      } else if (this.glViewer.requestRender) {
-        this.glViewer.requestRender();
-      } else {
-        console.warn("无法找到渲染方法");
-      }
+
     } else {
       console.error("未找到要显示的对象，ID:", objectId);
     }
