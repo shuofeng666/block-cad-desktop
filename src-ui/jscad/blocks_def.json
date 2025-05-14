@@ -1,72 +1,73 @@
 {
-    "Logic": {
-        "id": "logic",
-        "blocks": {
-            "var": {
-                "title": "var",
-                "arg": [
-                    {
-                        "name": "name",
-                        "type": "str",
-                        "value": "a"
-                    },
-                    {
-                        "name": "=",
-                        "type": "str",
-                        "value": "0"
-                    }
-                ]
-            },
-            "for": {
-                "title": "for",
-                "isStatementBlock":true,
-                "arg": [
-                    {
-                        "name": "var",
-                        "type": "str",
-                        "value": "a"
-                    },
-                    {
-                        "name": "start",
-                        "type": "num",
-                        "value": "0"
-                    },
-                    {
-                        "name": "step",
-                        "type": "num",
-                        "value": "1"
-                    },
-                    {
-                        "name": "end",
-                        "type": "num",
-                        "value": "10"
-                    }
-                ]
-            },
-            "if": {
-                "title": "if",
-                "isStatementBlock":true,
-                "arg": [
-                    {
-                        "name": "condition",
-                        "type": "str",
-                        "value": "a>10"
-                    }
-                ]
-            },
-            "#": {
-                "title": "#",
-                "isStatementBlock":true,
-                "arg": [
-                    {
-                        "name": "title",
-                        "type": "str",
-                        "value": "comment"
-                    }
-                ]
-            }
-        }
-    },
+  "Logic": {
+    "id": "logic",
+    "blocks": {
+      "var": {
+        "title": "var",
+        "arg": [
+          {
+            "name": "name",
+            "type": "str",
+            "value": "a"
+          },
+          {
+            "name": "=",
+            "type": "str",
+            "value": "0"
+          }
+        ]
+      },
+      "for": {
+        "title": "for",
+        "isStatementBlock": true,
+        "arg": [
+          {
+            "name": "var",
+            "type": "str",
+            "value": "a"
+          },
+          {
+            "name": "start",
+            "type": "num",
+            "value": "0"
+          },
+          {
+            "name": "step",
+            "type": "num",
+            "value": "1"
+          },
+          {
+            "name": "end",
+            "type": "num",
+            "value": "10"
+          }
+        ]
+      },
+      "if": {
+        "title": "if",
+        "isStatementBlock": true,
+        "arg": [
+          {
+            "name": "condition",
+            "type": "str",
+            "value": "a>10"
+          }
+        ]
+      },
+      "#": {
+        "title": "#",
+        "isStatementBlock": true,
+        "arg": [
+          {
+            "name": "title",
+            "type": "str",
+            "value": "comment"
+          }
+        ]
+      }
+    }
+  },
+
 
   "3D Model": {
     "id": "model_3d",
@@ -80,6 +81,10 @@
             "value": "default.stl"
           }
         ]
+      },
+      "upload_stl": {
+        "title": "Upload STL",
+        "arg": []
       },
       "create_cube": {
         "title": "Create Cube",
@@ -104,24 +109,34 @@
     }
   },
   "Wire Mesh": {
-  "id": "wire_mesh",
-  "blocks": {
-    "generate_wire_mesh": {
-      "title": "Generate Wire Mesh",
-      "isStatementBlock": true,
-      "arg": [
-        {
-          "name": "h_count",
-          "type": "num",
-          "value": "10"
-        },
-        {
-          "name": "v_count",
-          "type": "num",
-          "value": "10"
-        }
-      ]
-    },
+    "id": "wire_mesh",
+    "blocks": {
+      "generate_wire_mesh": {
+        "title": "Generate Wire Mesh",
+        "isStatementBlock": true,
+        "arg": [
+          {
+            "name": "h_count",
+            "type": "num",
+            "value": "10"
+          },
+          {
+            "name": "v_count",
+            "type": "num",
+            "value": "10"
+          },
+          {
+            "name": "use_tubes",
+            "type": "bool",
+            "value": "false"
+          },
+          {
+            "name": "tube_thickness",
+            "type": "num",
+            "value": "0.5"
+          }
+        ]
+      },
       "export_wire_csv": {
         "title": "Export Wire CSV",
         "arg": [
@@ -129,6 +144,61 @@
             "name": "filename",
             "type": "str",
             "value": "wire_mesh"
+          }
+        ]
+      }
+    }
+  },
+  "Transforms": {
+    "id": "transforms",
+    "blocks": {
+      "rotate_model": {
+        "title": "Rotate Model",
+        "arg": [
+          {
+            "name": "rotate_x",
+            "type": "num",
+            "value": "0"
+          },
+          {
+            "name": "rotate_y",
+            "type": "num",
+            "value": "0"
+          },
+          {
+            "name": "rotate_z",
+            "type": "num",
+            "value": "0"
+          }
+        ]
+      },
+      "scale_model": {
+        "title": "Scale Model",
+        "arg": [
+          {
+            "name": "scale",
+            "type": "num",
+            "value": "1"
+          }
+        ]
+      },
+      "translate_model": {
+        "title": "Translate Model",
+        "arg": [
+          {
+            "name": "translate_x",
+            "type": "num",
+            "value": "0"
+          },
+          {
+            "name": "translate_y",
+            "type": "num",
+            "value": "0"
+          },
+          {
+            "name": "translate_z",
+            "type": "num",
+            "value": "0"
           }
         ]
       }
@@ -142,17 +212,6 @@
         "isStatementBlock": true,
         "arg": []
       },
-      "add_to_scene": {
-        "title": "Add to Scene",
-        "isStatementBlock": true,
-        "arg": [
-          {
-            "name": "name",
-            "type": "str",
-            "value": "object"
-          }
-        ]
-      },
       "clear_scene": {
         "title": "Clear Scene",
         "arg": []
@@ -160,7 +219,7 @@
     }
   }
 
-    /*,
+  /*,
     "Primitives 2D": {
         "id": "primitive_2d",
         "blocks": {

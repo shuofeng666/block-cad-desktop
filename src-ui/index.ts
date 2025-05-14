@@ -59,7 +59,7 @@ if (t1) {
         try {
           // 首先清空场景
           glViewer.clearScene();
-          
+           threeJSProcessor.clearState();
           scope.reset();
           blockEditor.generateCode();
 

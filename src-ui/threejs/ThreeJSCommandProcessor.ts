@@ -74,6 +74,13 @@ export class ThreeJSCommandProcessor {
     }
   }
 
+    clearState() {
+    // 清理存储的对象引用
+    this.currentObjects.clear();
+    scope.setVar("_currentObjectId", null);
+    scope.setVar("_wireMesh", null);
+  }
+
   private rotateModel(cmd: any): string {
     const objectId = scope.context["_currentObjectId"];
     const object = this.currentObjects.get(objectId);

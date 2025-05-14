@@ -89,25 +89,53 @@ export class GLViewer {
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(pos.width, pos.height);
   }
+
   animate() {
     requestAnimationFrame(this.animate.bind(this));
     this.renderer.render(this.scene, this.camera);
   }
-  clearScene() {
-    this.group.clear();
-  }
-  async updateBlobObj(blob: Blob) {
-    const blog_string = blob;
-    const mesh = loader.parse(blog_string);
-    mesh.material = material;
-    if (mesh.children) {
-      mesh.children.map((c) => {
-        c.material = material;
-      });
-    }
 
-    this.updateObjMesh(mesh);
+  clearScene() {
+    // 清理 group 中的所有对象
+    while(this.group.children.length > 0) {
+      const child = this.group.children[0];
+      this.group.remove(child);
+      // 如果有 geometry 和 material，释放内存
+      if (child instanceof THREE.Mesh) {
+        if (child.geometry) child.geometry.dispose();
+        if (child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach(material => material.dispose());
+          } else {
+            child.material.dispose();
+          }
+        }
+      }
+    }
+    
+    // 清理场景中的所有动态添加的对象（例如灯光）
+    const objectsToRemove = [];
+    this.scene.traverse((object) => {
+      if (object !== this.scene && 
+          object !== this.group && 
+          object.type !== 'GridHelper' && 
+          object.type !== 'AxesHelper' &&
+          !(object instanceof THREE.Mesh && object.material.type === 'ShadowMaterial')) {
+        objectsToRemove.push(object);
+      }
+    });
+    
+    objectsToRemove.forEach(object => {
+      this.scene.remove(object);
+      // 释放资源
+      if (object instanceof THREE.Light) {
+        object.dispose?.();
+      }
+    });
   }
+
+
+
   updateObjMesh(mesh) {
     this.group.add(mesh);
   }
