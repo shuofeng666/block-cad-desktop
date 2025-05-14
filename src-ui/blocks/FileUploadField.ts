@@ -2,10 +2,12 @@
 import * as Blockly from 'blockly';
 
 export class FieldFileUpload extends Blockly.Field {
-  private fileInput: HTMLInputElement;
   private file: File | null = null;
+  private fileInput: HTMLInputElement;
+  // 标记为可序列化
+  SERIALIZABLE = true;
   
-  constructor(text: string = 'Choose File', validator?: any) {
+  constructor(text: string = '选择文件', validator?: any) {
     super(text, validator);
     
     // 创建文件输入元素
@@ -13,35 +15,70 @@ export class FieldFileUpload extends Blockly.Field {
     this.fileInput.type = 'file';
     this.fileInput.accept = '.stl';
     this.fileInput.style.display = 'none';
-    document.body.appendChild(this.fileInput);
     
     // 文件选择处理
     this.fileInput.onchange = (e: any) => {
       const file = e.target.files[0];
       if (file) {
+        console.log('文件选择成功:', file.name, file.size);
         this.file = file;
         this.setValue(file.name);
+        
+        // 触发工作区更新
+        if (this.sourceBlock_ && this.sourceBlock_.workspace) {
+          this.sourceBlock_.workspace.fireChangeListener(
+            new Blockly.Events.BlockChange(
+              this.sourceBlock_, 'field', this.name, this.text_, file.name
+            )
+          );
+        }
       }
     };
   }
   
-  showEditor_() {
-    // 当字段被点击时，触发文件选择
+  // 初始化 DOM
+  protected initView() {
+    super.initView();
+    // 添加文件输入到 DOM
+    if (!this.fileInput.parentNode) {
+      document.body.appendChild(this.fileInput);
+    }
+  }
+  
+  // 清理
+  dispose() {
+    // 移除文件输入元素
+    if (this.fileInput && this.fileInput.parentNode) {
+      this.fileInput.parentNode.removeChild(this.fileInput);
+    }
+    super.dispose();
+  }
+  
+  // 点击处理
+  protected showEditor_() {
+    console.log('触发文件选择对话框');
     this.fileInput.click();
   }
   
+  // 获取上传的文件
   getFile(): File | null {
+    console.log('获取文件:', this.file ? this.file.name : 'null');
     return this.file;
   }
   
-  doClassValidation_(newValue: any) {
+  // 验证
+  protected doClassValidation_(newValue: any) {
     return newValue;
   }
   
-  fromJson(options: any) {
-    this.setValue(options['text']);
+  // JSON 序列化
+  toJson() {
+    return {
+      text: this.getValue()
+    };
   }
   
+  // 从 JSON 反序列化
   static fromJson(options: any) {
     return new FieldFileUpload(options['text']);
   }
@@ -49,34 +86,3 @@ export class FieldFileUpload extends Blockly.Field {
 
 // 注册自定义字段
 Blockly.fieldRegistry.register('field_file_upload', FieldFileUpload);
-
-// 在 ThreeJSBlocks.ts 中使用
-// 首先导入
-// import { FieldFileUpload } from './FileUploadField';
-
-// 然后在 upload_stl 块定义中使用：
-"upload_stl": {
-  category: modelCategory,
-  definition: {
-    init: function() {
-      this.appendDummyInput()
-          .appendField("Upload STL")
-          .appendField(new FieldFileUpload("Choose File"), "FILE_UPLOAD");
-      
-      this.setPreviousStatement(true, null);
-      this.setNextStatement(true, null);
-      this.setColour(modelCategory.colour);
-      this.setTooltip("Upload an STL file from local");
-    }
-  },
-  generator: function(block: any) {
-    const field = block.getField('FILE_UPLOAD') as FieldFileUpload;
-    const file = field.getFile();
-    
-    if (file) {
-      const cmd = new Command('upload_stl', { file }, [], {});
-      scope.push(cmd);
-    }
-    return '';
-  }
-}

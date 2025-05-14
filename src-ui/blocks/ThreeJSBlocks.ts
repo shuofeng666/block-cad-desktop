@@ -2,6 +2,7 @@
 import * as Blockly from "blockly";
 import { scope } from "../jscad/Scope";
 import { Command } from "../jscad/Scope";
+import {FieldFileUpload } from './FileUploadField';
 
 export function registerThreeJSBlocks(
   codeGenerator: any,
@@ -142,126 +143,121 @@ export function registerThreeJSBlocks(
     },
 
     // Visualization 块
-    show_in_viewer: {
-      category: visualizationCategory,
-      definition: {
-        init: function () {
-          this.appendDummyInput().appendField("Show in 3D Viewer");
-          this.appendStatementInput("OBJECT")
-            .setCheck(null)
-            .appendField("object:");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour(visualizationCategory.colour);
-        },
-      },
-      generator: function (block: any) {
-        scope.newScope();
-        codeGenerator.statementToCode(block, "OBJECT");
-        const children = scope.scopeItem.items;
-        scope.popScope();
-
-        const cmd = new Command("show_in_viewer", {}, children, {});
-        scope.push(cmd);
-        return "";
-      },
+"show_in_viewer": {
+  category: visualizationCategory,
+  definition: {
+    init: function () {
+      this.appendDummyInput().appendField("Show in 3D Viewer");
+      this.appendStatementInput("OBJECT")
+        .setCheck(null)
+        .appendField("object:");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(visualizationCategory.colour);
     },
+  },
+  generator: function (block: any) {
+    // 首先处理子块
+    scope.newScope();
+    codeGenerator.statementToCode(block, "OBJECT");
+    const children = scope.scopeItem.items;
+    scope.popScope();
+    
+    // 确保子命令先执行
+    if (children && children.length > 0) {
+      children.forEach(child => scope.push(child));
+    }
+
+    // 然后显示
+    const cmd = new Command("show_in_viewer", {}, [], {});
+    scope.push(cmd);
+    return "";
+  },
+},
+// 在 ThreeJSBlocks.ts 中，替换 upload_stl 块的定义：
+
+
+// 在 ThreeJSBlocks.ts 的顶部添加导入
+//import { FieldFileUpload } from './FileUploadField';
+
+// 然后在 blockDefinitions 对象中，使用新的文件上传字段：
 "upload_stl": {
   category: modelCategory,
   definition: {
     init: function() {
-      const self = this;
-      self.uploadedFile = null;
-      
-      // 创建按钮
-      const button = new Blockly.FieldLabel("Choose File");
-      button.EDITABLE = true;
-      button.clickHandler_ = function() {
-        // 触发文件选择
-        if (!self.fileInput) {
-          self.fileInput = document.createElement('input');
-          self.fileInput.type = 'file';
-          self.fileInput.accept = '.stl';
-          self.fileInput.style.display = 'none';
-          document.body.appendChild(self.fileInput);
-          
-          self.fileInput.onchange = (e: any) => {
-            const file = e.target.files[0];
-            if (file) {
-              self.uploadedFile = file;
-              button.setValue(file.name);
-              // 触发工作区更新
-              if (self.workspace) {
-                self.workspace.fireChangeListener(new Blockly.Events.BlockChange(
-                  self, 'field', 'FILE_UPLOAD', 'Choose File', file.name
-                ));
-              }
-            }
-          };
-        }
-        self.fileInput.click();
-      };
-      
       this.appendDummyInput()
-          .appendField("Upload STL")
-          .appendField(button, "FILE_UPLOAD");
+          .appendField("上传 STL 文件")
+          .appendField(new FieldFileUpload("选择文件"), "FILE_UPLOAD");
       
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(modelCategory.colour);
-      this.setTooltip("Click to upload an STL file");
+      this.setTooltip("点击选择要上传的 STL 文件");
     }
   },
   generator: function(block: any) {
-    const file = block.uploadedFile;
+    console.log('生成 upload_stl 命令');
+    const field = block.getField('FILE_UPLOAD') as FieldFileUpload;
+    const file = field.getFile();
+    
     if (file) {
+      console.log('找到文件:', file.name);
       const cmd = new Command('upload_stl', { file }, [], {});
       scope.push(cmd);
+    } else {
+      console.log('未找到文件');
     }
     return '';
   }
 },
     // 在 blockDefinitions 对象中，Wire Mesh 块部分：
-    generate_wire_mesh: {
-      category: wireMeshCategory,
-      definition: {
-        init: function () {
-          this.appendDummyInput().appendField("Generate Wire Mesh");
+"generate_wire_mesh": {
+  category: wireMeshCategory,
+  definition: {
+    init: function () {
+      this.appendDummyInput().appendField("Generate Wire Mesh");
 
-          this.appendDummyInput()
-            .appendField("Horizontal wires:")
-            .appendField(new Blockly.FieldNumber(10, 1, 50), "H_COUNT")
-            .appendField("Vertical wires:")
-            .appendField(new Blockly.FieldNumber(10, 1, 50), "V_COUNT");
+      this.appendDummyInput()
+        .appendField("Horizontal wires:")
+        .appendField(new Blockly.FieldNumber(10, 1, 50), "H_COUNT")
+        .appendField("Vertical wires:")
+        .appendField(new Blockly.FieldNumber(10, 1, 50), "V_COUNT");
 
-          this.appendStatementInput("MODEL")
-            .setCheck(null)
-            .appendField("for model:");
+      this.appendStatementInput("MODEL")
+        .setCheck(null)
+        .appendField("for model:");
 
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour(wireMeshCategory.colour);
-        },
-      },
-      generator: function (block: any) {
-        const hCount = parseInt(block.getFieldValue("H_COUNT"));
-        const vCount = parseInt(block.getFieldValue("V_COUNT"));
-
-        scope.newScope();
-        codeGenerator.statementToCode(block, "MODEL");
-        const children = scope.scopeItem.items;
-        scope.popScope();
-
-        const cmd = new Command(
-          "generate_wire_mesh",
-          { hCount, vCount },
-          children,
-          {}
-        );
-        scope.push(cmd);
-        return "";
-      },
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(wireMeshCategory.colour);
     },
+  },
+  generator: function (block: any) {
+    const hCount = parseInt(block.getFieldValue("H_COUNT"));
+    const vCount = parseInt(block.getFieldValue("V_COUNT"));
+
+    // 首先处理子块（模型）
+    scope.newScope();
+    codeGenerator.statementToCode(block, "MODEL");
+    const children = scope.scopeItem.items;
+    scope.popScope();
+    
+    // 确保子命令先执行
+    if (children && children.length > 0) {
+      children.forEach(child => scope.push(child));
+    }
+
+    // 然后生成 wire mesh
+    const cmd = new Command(
+      "generate_wire_mesh",
+      { hCount, vCount },
+      [], // 不再传递 children，因为已经单独处理了
+      {}
+    );
+    scope.push(cmd);
+    return "";
+  },
+},
     clear_scene: {
       category: visualizationCategory,
       definition: {
