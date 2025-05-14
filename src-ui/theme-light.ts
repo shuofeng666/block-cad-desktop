@@ -1,18 +1,29 @@
+// 新建文件 src-ui/theme-large-blocks.ts
+
 import * as Blockly from "blockly";
 
-const LightTheme: Blockly.Theme = Blockly.Theme.defineTheme('light-mode', {
+// 创建一个让块更大的主题
+const LargeBlocksTheme: Blockly.Theme = Blockly.Theme.defineTheme('large-blocks', {
   base: Blockly.Themes.Classic,
-  name: 'light-mode',
+  name: 'large-blocks',
+  fontStyle: {
+    family: 'Roboto, sans-serif',
+    weight: '500',
+    size: 14  // 增大字体
+  },
+  startHats: true,
   blockStyles: {
     logic_blocks: {
       colourPrimary: '#5b8def',
       colourSecondary: '#4a7dc7',
-      colourTertiary: '#396cb0'
+      colourTertiary: '#396cb0',
+      hat: 'cap'
     },
     loop_blocks: {
       colourPrimary: '#85a55a',
       colourSecondary: '#73924a',
-      colourTertiary: '#5f7a3a'
+      colourTertiary: '#5f7a3a',
+      hat: 'cap'
     },
     math_blocks: {
       colourPrimary: '#f3b034',
@@ -46,22 +57,19 @@ const LightTheme: Blockly.Theme = Blockly.Theme.defineTheme('light-mode', {
     }
   },
   componentStyles: {
-    workspaceBackgroundColour: '#f3f4f6',
-    toolboxBackgroundColour: '#ffffff',
-    toolboxForegroundColour: '#4b5563',
-    flyoutBackgroundColour: '#f9fafb',
-    flyoutForegroundColour: '#1f2937',
-    flyoutOpacity: 0.95,
-    scrollbarColour: '#d1d5db',
-    insertionMarkerColour: '#3b82f6',
-    insertionMarkerOpacity: 0.4,
-    markerColour: '#ef4444',
-    cursorColour: '#3b82f6',
-    selectedGlowColour: '#3b82f6',
-    selectedGlowOpacity: 0.4,
-    replacementGlowColour: '#f59e0b',
-    replacementGlowOpacity: 0.5
+    workspaceBackgroundColour: '#1e1e1e',
+    toolboxBackgroundColour: '#2a2a2a',
+    toolboxForegroundColour: '#ccc',
+    flyoutBackgroundColour: '#252525',
+    flyoutForegroundColour: '#ccc',
+    flyoutOpacity: 0.9,
+    scrollbarColour: '#797979',
+    insertionMarkerColour: '#fff',
+    insertionMarkerOpacity: 0.3,
+    scrollbarOpacity: 0.3,
+    cursorColour: '#d0d0ff',
+    blackBackground: '#333'
   }
 });
 
-export default LightTheme;
+export default LargeBlocksTheme;

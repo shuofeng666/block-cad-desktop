@@ -1,21 +1,20 @@
+// BlockEditor.ts - 兼容版本
+
 import DarkTheme from '@blockly/theme-dark';
 import {generate_blocks} from "./openscad";
 import * as Blockly from 'blockly';
 
-var blocklyArea: HTMLDivElement|null = null;
-var blocklyDiv:HTMLDivElement|null = null;
+var blocklyArea = null;
+var blocklyDiv = null;
 
-// 添加 BlockHighlight 类
 export class BlockHighlight {
-    private workspace: Blockly.WorkspaceSvg;
-    private highlightSvg?: SVGElement;
-    private currentBlockId?: string;
-    
-    constructor(workspace: Blockly.WorkspaceSvg) {
+    constructor(workspace) {
         this.workspace = workspace;
+        this.highlightSvg = undefined;
+        this.currentBlockId = undefined;
     }
     
-    highlightBlock(blockId: string) {
+    highlightBlock(blockId) {
         // 如果已经高亮这个块，就不需要重新高亮
         if (this.currentBlockId === blockId) return;
         
@@ -39,7 +38,7 @@ export class BlockHighlight {
                 'class': 'blockHighlight',
                 'transform': `translate(${xy.x}, ${xy.y})`
             },
-            this.workspace.getParentSvg()  // 修改这里
+            this.workspace.getParentSvg()
         );
         
         const rect = Blockly.utils.dom.createSvgElement(
@@ -85,73 +84,92 @@ export class BlockHighlight {
     }
 }
 
-export class BlocklyEditor{
-    blocklyArea: HTMLDivElement;
-    blocklyDiv:HTMLDivElement;
-    workspace:Blockly.WorkspaceSvg;
-    codeGenerator:Blockly.CodeGenerator;
-    blockHighlight: BlockHighlight;  // 添加高亮管理器
-    
-    constructor(blocks,toolbox,codegen,theme,blocklyArea:HTMLDivElement){
+export class BlocklyEditor {
+    constructor(blocks, toolbox, codegen, theme, blocklyArea) {
         this.blocklyArea = blocklyArea;
-        this.codeGenerator=codegen;
+        this.codeGenerator = codegen;
+        
+        // === 在创建 workspace 之前设置全局常量 ===
+        // 这些设置会让所有块变大，不会造成重叠
+        
+        // 基本尺寸设置
+        Blockly.BlockSvg.MIN_BLOCK_Y = 35;              // 块的最小高度 (默认 25)
+        Blockly.BlockSvg.FIELD_HEIGHT = 25;             // 字段高度 (默认 18)
+        Blockly.BlockSvg.FIELD_Y_PADDING = 8;           // 字段垂直内边距 (默认 5)
+        Blockly.BlockSvg.INLINE_PADDING_Y = 8;          // 内联内边距 (默认 5)
+        
+        // 文字和输入框设置
+        Blockly.BlockSvg.FIELD_TEXT_FONTSIZE = 14;      // 字体大小 (默认 11)
+        Blockly.BlockSvg.FIELD_TEXT_BASELINE = 23;      // 文本基线 (默认 16)
+        Blockly.FieldTextInput.DEFAULT_WIDTH = 80;      // 文本输入宽度 (默认 40)
+        Blockly.FieldNumber.DEFAULT_WIDTH = 80;         // 数字输入宽度 (默认 40)
+        
+        // 连接和圆角设置
+        Blockly.BlockSvg.EDGE_RADIUS = 6;               // 圆角半径 (默认 4)
+        Blockly.BlockSvg.CONNECTION_HEIGHT = 4;         // 连接高度 (默认 3)
+        
+        // 语句和值输入设置
+        Blockly.BlockSvg.STATEMENT_INPUT_PADDING_Y = 8; // 语句输入内边距
+        Blockly.BlockSvg.VALUE_INPUT_PADDING = 8;       // 值输入内边距
+        
+        // 下拉框设置
+        Blockly.FieldDropdown.ARROW_SIZE = 15;          // 下拉箭头大小 (默认 12)
+        Blockly.FieldDropdown.BORDER_RECT_DEFAULT = 6;  // 下拉框边距
+        
+        // === 创建 blocklyDiv ===
         this.blocklyDiv = document.createElement("div");
-        this.blocklyDiv.style.position ="absolute"
+        this.blocklyDiv.style.position = "absolute";
         this.blocklyDiv.classList.add("blocklyDiv");
         this.blocklyArea.appendChild(this.blocklyDiv);
         
-      // 在 BlockEditor.ts 的 constructor 中修改 options
-
-var options:Blockly.BlocklyOptions = {
-    toolbox: toolbox,
-    collapse: true,
-    comments: true,
-    disable: true,
-    maxBlocks: Infinity,
-    trashcan: false,
-    horizontalLayout: false,
-    toolboxPosition: 'start',
-    css: true,
-    media: 'https://blockly-demo.appspot.com/static/media/',
-    rtl: false,
-    scrollbars: true,
-    sounds: false,
-    //renderer: 'zelos',
-    oneBasedIndex: true,
-    zoom: {
-        controls: true,
-        startScale: 1.0,  // 修改初始缩放比例（原来是 0.8）
-        maxScale: 3,
-        minScale: 0.5,    // 提高最小缩放
-        scaleSpeed: 1.2
-    },
-    theme: theme,
-    // 添加网格配置，让块之间的间距更大
-    grid: {
-        spacing: 25,      // 网格间距（原默认是 20）
-        length: 3,
-        colour: '#ccc',
-        snap: true
-    },
-    // 调整块的渲染选项
-    renderer: 'geras', // 或者 'zelos' - 不同的渲染器有不同的样式
-    // 添加自定义缩放
-    move: {
-        scrollbars: true,
-        drag: true,
-        wheel: true
-    }
-};
+        // === 配置选项 ===
+        var options = {
+            toolbox: toolbox,
+            collapse: true,
+            comments: true,
+            disable: true,
+            maxBlocks: Infinity,
+            trashcan: false,
+            horizontalLayout: false,
+            toolboxPosition: 'start',
+            css: true,
+            media: 'https://blockly-demo.appspot.com/static/media/',
+            rtl: false,
+            scrollbars: true,
+            sounds: false,
+            oneBasedIndex: true,
+            zoom: {
+                controls: true,
+                startScale: 1.0,    // 保持 1.0，不需要缩放
+                maxScale: 3,
+                minScale: 0.5,
+                scaleSpeed: 1.2
+            },
+            theme: theme,
+            grid: {
+                spacing: 30,        // 增加网格间距，防止块重叠
+                length: 3,
+                colour: '#ccc',
+                snap: true
+            },
+            renderer: 'geras',
+            move: {
+                scrollbars: true,
+                drag: true,
+                wheel: true
+            }
+        };
         
+        // === 创建 workspace ===
         this.workspace = Blockly.inject(this.blocklyDiv, options);
         
-        // 初始化高亮管理器
+        // === 初始化高亮管理器 ===
         this.blockHighlight = new BlockHighlight(this.workspace);
         
-        // 添加块选择事件监听
-        this.workspace.addChangeListener((event: Blockly.Events.Abstract) => {
+        // === 添加事件监听 ===
+        this.workspace.addChangeListener((event) => {
             if (event.type === Blockly.Events.BLOCK_SELECT) {
-                const selectEvent = event as Blockly.Events.BlockSelect;
+                const selectEvent = event;
                 if (selectEvent.newElementId) {
                     this.blockHighlight.highlightBlock(selectEvent.newElementId);
                 } else {
@@ -161,30 +179,30 @@ var options:Blockly.BlocklyOptions = {
         });
     }
     
-    resetEditor(){
-        Blockly.serialization.workspaces.load({},this.workspace);
+    resetEditor() {
+        Blockly.serialization.workspaces.load({}, this.workspace);
     }
     
-    getBlocklyCode(){
+    getBlocklyCode() {
         return JSON.stringify(Blockly.serialization.workspaces.save(this.workspace));
     }
     
-    setBlocklyCode(data:string){
-        Blockly.serialization.workspaces.load(JSON.parse(data),this.workspace);
+    setBlocklyCode(data) {
+        Blockly.serialization.workspaces.load(JSON.parse(data), this.workspace);
     }
     
-    generateCode(){
+    generateCode() {
         return this.codeGenerator.workspaceToCode(this.workspace);
     }
     
-    resizeEditor(){
-        var element:HTMLElement|null = this.blocklyArea;
+    resizeEditor() {
+        var element = this.blocklyArea;
         let x = 0;
         let y = 0;
         do {
             x += element.offsetLeft;
             y += element.offsetTop;
-            element = element.offsetParent as HTMLElement;
+            element = element.offsetParent;
         } while (element);
         // Position blocklyDiv over blocklyArea.
         this.blocklyDiv.style.left = x + 'px';
@@ -194,8 +212,6 @@ var options:Blockly.BlocklyOptions = {
         Blockly.svgResize(this.workspace);
     }
 }
-
-
 
 /*
 export interface IOSCadBlockEditor{
