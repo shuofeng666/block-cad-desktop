@@ -1,94 +1,106 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
 
 body {
-    display: flex;
-    flex-direction: column;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    font-family: 'Roboto', sans-serif;
-    user-select: none;
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  background-color: #1e1e1e;
+  color: #eee;
+  user-select: none;
 }
 
 .app {
-    display: flex;
-    flex-direction: column;
-    flex: auto 1 1;
-    background-color: #000;
+  display: flex;
+  flex-direction: column;
+  flex: auto 1 1;
+  background-color: #1e1e1e;
 }
 
 .content {
-    display: flex;
-    flex-direction: row;
-    flex-grow: 1;
-    background-color: rebeccapurple;
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+  background-color: #2a2a2a;
 }
 
-.left {
-    width: 50%;
-    flex-direction: column;
-    display: flex;
-    background-color: red;
+.left, .right {
+  width: 50%;
+  flex-direction: column;
+  display: flex;
+  background-color: #2a2a2a;
+  border-right: 1px solid #444;
 }
 
 .toolbar {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    border-bottom: 1px solid #ffffff0a;
-    background-color: rgb(51, 51, 51);
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 6px 10px;
+  background-color: #333;
+  border-bottom: 1px solid #444;
+  gap: 8px;
 }
 
 .toolbar-icon {
-    padding: 5px;
-    color: #aaa;
-    cursor: pointer;
-
+  padding: 6px 10px;
+  color: #ccc;
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease;
+  border-radius: 4px;
 }
 
 .toolbar-icon:hover {
-    color: #fff;
+  color: #fff;
+  background-color: #555;
 }
 
 #block-area {
-    flex-grow: 1;
+  flex-grow: 1;
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml;utf8,\
+    <svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'>\
+      <line x1='10' y1='5' x2='10' y2='15' stroke='#aaa' stroke-width='1' />\
+      <line x1='5' y1='10' x2='15' y2='10' stroke='#aaa' stroke-width='1' />\
+    </svg>");
+  background-repeat: repeat;
 }
 
-.right {
-    width: 50%;
-    flex-direction: column;
-    display: flex;
-    background-color: blue;
-}
+
+
+
 
 #viewer {
-    flex-grow: 1;
+  flex-grow: 1;
+  background-color: #121212;
 }
 
 .blocklyTreeRow {
-    padding-top: 5px;
-
+  padding-top: 5px;
 }
 
 .geras-renderer.dark-theme .blocklyText {
-    fill: #000;
+  fill: #eee;
 }
 
 .blocklyTreeLabel {
-    font-size: 14px;
+  font-size: 14px;
 }
 
 .blocklyMainBackground {
-    stroke: #1e1e1e;
+  stroke: #333;
 }
 
 .gutter {
-    background-color: rgba(50, 50, 50, 1);
-    width: 3px;
+  background-color: #444;
+  width: 3px;
 }
-

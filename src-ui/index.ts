@@ -3,7 +3,7 @@ import { Toolbar } from "./widgets/Toolbar";
 import { GLViewer } from "./gl/GLViewer";
 import "./app.css";
 import { BlocklyEditor } from "./BlockEditor";
-import DarkTheme from "@blockly/theme-dark";
+import LightTheme from "./theme-light";
 import {
   getBlocks,
   getToolbox,
@@ -33,7 +33,7 @@ var blockEditor = new BlocklyEditor(
   getBlocks(),
   getToolbox(),
   getCodeGenerator(),
-  DarkTheme,
+  LightTheme,
   document.getElementById("block-area") as HTMLDivElement
 );
 
