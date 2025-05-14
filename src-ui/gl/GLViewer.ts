@@ -46,7 +46,7 @@ export class GLViewer {
     grid.material.transparent = true;
     grid.position.y = -0.01;
     grid.rotation.x = -Math.PI / 2;
-    this.scene.add(grid);
+    //this.scene.add(grid);
 
     // 添加坐标轴
     const axes = new THREE.AxesHelper(50);

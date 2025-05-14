@@ -419,8 +419,8 @@ if (!geometry.index) {
       this.glViewer.scene.add(axesHelper);
 
       // 添加网格
-      const gridHelper = new THREE.GridHelper(200, 20);
-      this.glViewer.scene.add(gridHelper);
+    // const gridHelper = new THREE.GridHelper(200, 20);
+    //  this.glViewer.scene.add(gridHelper);
 
       // 克隆并添加对象
       const clonedObject = object.clone();
