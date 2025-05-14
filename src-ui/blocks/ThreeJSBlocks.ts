@@ -1,62 +1,65 @@
 // src-ui/blocks/ThreeJSBlocks.ts
-import * as Blockly from 'blockly';
-import { scope } from '../jscad/Scope';
-import { Command } from '../jscad/Scope';
+import * as Blockly from "blockly";
+import { scope } from "../jscad/Scope";
+import { Command } from "../jscad/Scope";
 
-export function registerThreeJSBlocks(codeGenerator: any, addToolboxCategory: any) {
+export function registerThreeJSBlocks(
+  codeGenerator: any,
+  addToolboxCategory: any
+) {
   // 注册工具箱类别
   const modelCategory = addToolboxCategory("3D Model");
   const wireMeshCategory = addToolboxCategory("Wire Mesh");
   const visualizationCategory = addToolboxCategory("Visualization");
-  
+
   // 块定义
   const blockDefinitions = {
     // 3D Model 块
-    "load_stl": {
+    load_stl: {
       category: modelCategory,
       definition: {
-        init: function() {
+        init: function () {
           this.appendDummyInput()
-              .appendField("Load STL")
-              .appendField("file:")
-              .appendField(new Blockly.FieldTextInput("default.stl"), "FILENAME");
+            .appendField("Load STL")
+            .appendField("file:")
+            .appendField(new Blockly.FieldTextInput("default.stl"), "FILENAME");
           this.setPreviousStatement(true, null);
           this.setNextStatement(true, null);
           this.setColour(modelCategory.colour);
           this.setTooltip("Load an STL file");
-        }
+        },
       },
-      generator: function(block: any) {
-        const filename = block.getFieldValue('FILENAME');
-        const cmd = new Command('load_stl', { filename }, [], {});
+      generator: function (block: any) {
+        const filename = block.getFieldValue("FILENAME");
+        const cmd = new Command("load_stl", { filename }, [], {});
         scope.push(cmd);
-        return '';
-      }
+        return "";
+      },
     },
-    
-    "create_cube": {
+
+    create_cube: {
       category: modelCategory,
       definition: {
-        init: function() {
+        init: function () {
           this.appendDummyInput()
-              .appendField("Create Cube")
-              .appendField("size:")
-              .appendField(new Blockly.FieldNumber(50, 1), "SIZE");
+            .appendField("Create Cube")
+            .appendField("size:")
+            .appendField(new Blockly.FieldNumber(50, 1), "SIZE");
           this.setPreviousStatement(true, null);
           this.setNextStatement(true, null);
           this.setColour(modelCategory.colour);
-        }
+        },
       },
-      generator: function(block: any) {
-        const size = parseFloat(block.getFieldValue('SIZE'));
-        const cmd = new Command('create_cube', { size }, [], {});
+      generator: function (block: any) {
+        const size = parseFloat(block.getFieldValue("SIZE"));
+        const cmd = new Command("create_cube", { size }, [], {});
         scope.push(cmd);
-        return '';
-      }
+        return "";
+      },
     },
-    
+
     // Wire Mesh 块
-/*     "generate_horizontal_wires": {
+    /*     "generate_horizontal_wires": {
       category: wireMeshCategory,
       definition: {
         init: function() {
@@ -116,53 +119,52 @@ export function registerThreeJSBlocks(codeGenerator: any, addToolboxCategory: an
         return '';
       }
     }, */
-    
-    "export_wire_csv": {
+
+    export_wire_csv: {
       category: wireMeshCategory,
       definition: {
-        init: function() {
+        init: function () {
           this.appendDummyInput()
-              .appendField("Export Wire CSV")
-              .appendField("filename:")
-              .appendField(new Blockly.FieldTextInput("wire_mesh"), "FILENAME");
+            .appendField("Export Wire CSV")
+            .appendField("filename:")
+            .appendField(new Blockly.FieldTextInput("wire_mesh"), "FILENAME");
           this.setPreviousStatement(true, null);
           this.setNextStatement(true, null);
           this.setColour(wireMeshCategory.colour);
-        }
+        },
       },
-      generator: function(block: any) {
-        const filename = block.getFieldValue('FILENAME');
-        const cmd = new Command('export_wire_csv', { filename }, [], {});
+      generator: function (block: any) {
+        const filename = block.getFieldValue("FILENAME");
+        const cmd = new Command("export_wire_csv", { filename }, [], {});
         scope.push(cmd);
-        return '';
-      }
+        return "";
+      },
     },
-    
+
     // Visualization 块
-    "show_in_viewer": {
+    show_in_viewer: {
       category: visualizationCategory,
       definition: {
-        init: function() {
-          this.appendDummyInput()
-              .appendField("Show in 3D Viewer");
+        init: function () {
+          this.appendDummyInput().appendField("Show in 3D Viewer");
           this.appendStatementInput("OBJECT")
-              .setCheck(null)
-              .appendField("object:");
+            .setCheck(null)
+            .appendField("object:");
           this.setPreviousStatement(true, null);
           this.setNextStatement(true, null);
           this.setColour(visualizationCategory.colour);
-        }
+        },
       },
-      generator: function(block: any) {
+      generator: function (block: any) {
         scope.newScope();
-        codeGenerator.statementToCode(block, 'OBJECT');
+        codeGenerator.statementToCode(block, "OBJECT");
         const children = scope.scopeItem.items;
         scope.popScope();
-        
-        const cmd = new Command('show_in_viewer', {}, children, {});
+
+        const cmd = new Command("show_in_viewer", {}, children, {});
         scope.push(cmd);
-        return '';
-      }
+        return "";
+      },
     },
 "upload_stl": {
   category: modelCategory,
@@ -219,68 +221,73 @@ export function registerThreeJSBlocks(codeGenerator: any, addToolboxCategory: an
     return '';
   }
 },
-// 在 blockDefinitions 对象中，Wire Mesh 块部分：
-"generate_wire_mesh": {
-  category: wireMeshCategory,
-  definition: {
-    init: function() {
-      this.appendDummyInput()
-          .appendField("Generate Wire Mesh");
-      
-      this.appendDummyInput()
-          .appendField("Horizontal wires:")
-          .appendField(new Blockly.FieldNumber(10, 1, 50), "H_COUNT")
-          .appendField("Vertical wires:")
-          .appendField(new Blockly.FieldNumber(10, 1, 50), "V_COUNT");
-      
-      this.appendStatementInput("MODEL")
-          .setCheck(null)
-          .appendField("for model:");
-      
-      this.setPreviousStatement(true, null);
-      this.setNextStatement(true, null);
-      this.setColour(wireMeshCategory.colour);
-    }
-  },
-  generator: function(block: any) {
-    const hCount = parseInt(block.getFieldValue('H_COUNT'));
-    const vCount = parseInt(block.getFieldValue('V_COUNT'));
-    
-    scope.newScope();
-    codeGenerator.statementToCode(block, 'MODEL');
-    const children = scope.scopeItem.items;
-    scope.popScope();
-    
-    const cmd = new Command('generate_wire_mesh', { hCount, vCount }, children, {});
-    scope.push(cmd);
-    return '';
-  }
-},
-    "clear_scene": {
+    // 在 blockDefinitions 对象中，Wire Mesh 块部分：
+    generate_wire_mesh: {
+      category: wireMeshCategory,
+      definition: {
+        init: function () {
+          this.appendDummyInput().appendField("Generate Wire Mesh");
+
+          this.appendDummyInput()
+            .appendField("Horizontal wires:")
+            .appendField(new Blockly.FieldNumber(10, 1, 50), "H_COUNT")
+            .appendField("Vertical wires:")
+            .appendField(new Blockly.FieldNumber(10, 1, 50), "V_COUNT");
+
+          this.appendStatementInput("MODEL")
+            .setCheck(null)
+            .appendField("for model:");
+
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(wireMeshCategory.colour);
+        },
+      },
+      generator: function (block: any) {
+        const hCount = parseInt(block.getFieldValue("H_COUNT"));
+        const vCount = parseInt(block.getFieldValue("V_COUNT"));
+
+        scope.newScope();
+        codeGenerator.statementToCode(block, "MODEL");
+        const children = scope.scopeItem.items;
+        scope.popScope();
+
+        const cmd = new Command(
+          "generate_wire_mesh",
+          { hCount, vCount },
+          children,
+          {}
+        );
+        scope.push(cmd);
+        return "";
+      },
+    },
+    clear_scene: {
       category: visualizationCategory,
       definition: {
-        init: function() {
-          this.appendDummyInput()
-              .appendField("Clear Scene");
+        init: function () {
+          this.appendDummyInput().appendField("Clear Scene");
           this.setPreviousStatement(true, null);
           this.setNextStatement(true, null);
           this.setColour(visualizationCategory.colour);
-        }
+        },
       },
-      generator: function(block: any) {
-        const cmd = new Command('clear_scene', {}, [], {});
+      generator: function (block: any) {
+        const cmd = new Command("clear_scene", {}, [], {});
         scope.push(cmd);
-        return '';
-      }
-    }
+        return "";
+      },
+    },
   };
-  
+
   // 注册所有块
-  Object.entries(blockDefinitions).forEach(([blockId, { category, definition, generator }]) => {
-    Blockly.Blocks[blockId] = definition;
-    codeGenerator[blockId] = generator;
-    
-    // 添加到工具箱
-    category.contents.push({ kind: "block", type: blockId });
-  });
+  Object.entries(blockDefinitions).forEach(
+    ([blockId, { category, definition, generator }]) => {
+      Blockly.Blocks[blockId] = definition;
+      codeGenerator[blockId] = generator;
+
+      // 添加到工具箱
+      category.contents.push({ kind: "block", type: blockId });
+    }
+  );
 }
