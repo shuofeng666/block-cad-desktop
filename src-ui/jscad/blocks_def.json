@@ -67,6 +67,106 @@
             }
         }
     },
+
+  "3D Model": {
+    "id": "model_3d",
+    "blocks": {
+      "load_stl": {
+        "title": "Load STL",
+        "arg": [
+          {
+            "name": "filename",
+            "type": "str",
+            "value": "default.stl"
+          }
+        ]
+      },
+      "create_cube": {
+        "title": "Create Cube",
+        "arg": [
+          {
+            "name": "size",
+            "type": "num",
+            "value": "50"
+          }
+        ]
+      },
+      "create_sphere": {
+        "title": "Create Sphere",
+        "arg": [
+          {
+            "name": "radius",
+            "type": "num",
+            "value": "25"
+          }
+        ]
+      }
+    }
+  },
+  "Wire Mesh": {
+    "id": "wire_mesh",
+    "blocks": {
+      "generate_horizontal_wires": {
+        "title": "Generate Horizontal Wires",
+        "isStatementBlock": true,
+        "arg": [
+          {
+            "name": "count",
+            "type": "num",
+            "value": "10"
+          }
+        ]
+      },
+      "generate_vertical_wires": {
+        "title": "Generate Vertical Wires",
+        "isStatementBlock": true,
+        "arg": [
+          {
+            "name": "count",
+            "type": "num",
+            "value": "10"
+          }
+        ]
+      },
+      "export_wire_csv": {
+        "title": "Export Wire CSV",
+        "arg": [
+          {
+            "name": "filename",
+            "type": "str",
+            "value": "wire_mesh"
+          }
+        ]
+      }
+    }
+  },
+  "Visualization": {
+    "id": "visualization",
+    "blocks": {
+      "show_in_viewer": {
+        "title": "Show in 3D Viewer",
+        "isStatementBlock": true,
+        "arg": []
+      },
+      "add_to_scene": {
+        "title": "Add to Scene",
+        "isStatementBlock": true,
+        "arg": [
+          {
+            "name": "name",
+            "type": "str",
+            "value": "object"
+          }
+        ]
+      },
+      "clear_scene": {
+        "title": "Clear Scene",
+        "arg": []
+      }
+    }
+  }
+
+    /*,
     "Primitives 2D": {
         "id": "primitive_2d",
         "blocks": {
@@ -1060,7 +1160,7 @@
                 ]
             }
         }
-    },
+    } ,
     "Holes":{
         "id" : "holes",
         "blocks":{
@@ -1098,5 +1198,5 @@
                 ]
             }
         }
-    }
+    } */
 }
