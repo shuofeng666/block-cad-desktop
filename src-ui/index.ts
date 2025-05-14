@@ -64,40 +64,33 @@ if(t1){
         }else if(cmd=="save"){
             saveFileAction(blockEditor.getBlocklyCode());
         }else if(cmd=="wire_mesh_example"){
-            // Wire Mesh 示例
-            const exampleCode = {
-                "blocks": {
-                    "languageVersion": 0,
-                    "blocks": [{
-                        "type": "load_stl",
-                        "fields": {"FILENAME": "default.stl"},
-                        "next": {
-                            "block": {
-                                "type": "generate_horizontal_wires",
-                                "fields": {"COUNT": "10"},
-                                "inputs": {
-                                    "MODEL": {
-                                        "block": {
-                                            "type": "generate_vertical_wires",
-                                            "fields": {"COUNT": "10"},
-                                            "inputs": {
-                                                "MODEL": {
-                                                    "block": {
-                                                        "type": "show_in_viewer"
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }]
-                }
-            };
-            
-            blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
+  // 更新示例代码
+  const exampleCode = {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [{
+        "type": "upload_stl",  // 或者仍然使用 load_stl
+        "fields": {"FILENAME": "default.stl"},
+        "next": {
+          "block": {
+            "type": "generate_wire_mesh",  // 使用新的组合块
+            "fields": {
+              "H_COUNT": "10",
+              "V_COUNT": "10"
+            },
+            "next": {
+              "block": {
+                "type": "show_in_viewer"
+              }
+            }
+          }
         }
+      }]
+    }
+  };
+  
+  blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
+}
     });
     
     // 添加工具栏按钮

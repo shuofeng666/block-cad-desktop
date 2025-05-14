@@ -24,9 +24,12 @@ export class ThreeJSCommandProcessor {
           
         case "create_cube":
           return this.createCube(cmd.args.size);
-          
-        case "create_sphere":
-          return this.createSphere(cmd.args.radius);
+           // 添加这个新的 case
+    case "generate_wire_mesh":
+      return await this.generateWireMesh(cmd);
+        // 添加这个新的 case
+      case "upload_stl":
+        return await this.uploadSTL(cmd.args.file);
           
         case "generate_horizontal_wires":
           return await this.generateHorizontalWires(cmd);
@@ -97,6 +100,39 @@ export class ThreeJSCommandProcessor {
     return id;
   }
   
+
+  private async uploadSTL(file: File): Promise<string> {
+  const loader = new STLLoader();
+  
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      const arrayBuffer = e.target.result;
+      try {
+        const geometry = loader.parse(arrayBuffer);
+        geometry.center();
+        
+        const material = new THREE.MeshNormalMaterial({
+          transparent: true,
+          opacity: 0.8
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        
+        const id = `stl_${Date.now()}`;
+        this.currentObjects.set(id, mesh);
+        scope.setVar('_currentObjectId', id);
+        
+        resolve(id);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
   private async generateHorizontalWires(cmd: any): Promise<string> {
     // 获取当前对象 ID
     let objectId = scope.context['_currentObjectId'];
@@ -236,30 +272,52 @@ export class ThreeJSCommandProcessor {
     return id;
   }
   
-  private createVerticalWire(model: THREE.Mesh, z: number, boundingBox: THREE.Box3, size: THREE.Vector3) {
-    // 类似 createHorizontalWire，但使用 Z 平面
-    try {
-      const intersectionPoints = [];
-      const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -z);
-      // ... 其余逻辑与 createHorizontalWire 类似
-      
-      const points2D = intersectionPoints.map(p => [p.x, p.y]);
-      const hullPoints = hull(points2D, 20);
-      
-      if (!hullPoints || hullPoints.length < 3) return null;
-      
-      const linePoints = hullPoints.map(p => new THREE.Vector3(p[0], p[1], z));
-      linePoints.push(linePoints[0].clone());
-      
-      const lineGeometry = new THREE.BufferGeometry().setFromPoints(linePoints);
-      const lineMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
-      
-      return new THREE.Line(lineGeometry, lineMaterial);
-    } catch (error) {
-      console.error('Error creating vertical wire:', error);
-      return null;
+private createVerticalWire(model: THREE.Mesh, z: number, boundingBox: THREE.Box3, size: THREE.Vector3) {
+  try {
+    const intersectionPoints = [];
+    const geometry = model.geometry;
+    const vertices = geometry.attributes.position;
+    const indices = geometry.index;
+    
+    // 创建垂直平面（沿 Z 轴）
+    const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -z);
+    
+    // 计算交点
+    if (indices) {
+      for (let i = 0; i < indices.count; i += 3) {
+        const a = new THREE.Vector3().fromBufferAttribute(vertices, indices.getX(i));
+        const b = new THREE.Vector3().fromBufferAttribute(vertices, indices.getX(i + 1));
+        const c = new THREE.Vector3().fromBufferAttribute(vertices, indices.getX(i + 2));
+        
+        model.localToWorld(a);
+        model.localToWorld(b);
+        model.localToWorld(c);
+        
+        this.addIntersectionPoints(a, b, c, plane, intersectionPoints);
+      }
     }
+    
+    if (intersectionPoints.length < 3) return null;
+    
+    // 使用 hull 算法（投影到 XY 平面）
+    const points2D = intersectionPoints.map(p => [p.x, p.y]);
+    const hullPoints = hull(points2D, 20);
+    
+    if (!hullPoints || hullPoints.length < 3) return null;
+    
+    // 创建线条
+    const linePoints = hullPoints.map(p => new THREE.Vector3(p[0], p[1], z));
+    linePoints.push(linePoints[0].clone()); // 闭合
+    
+    const lineGeometry = new THREE.BufferGeometry().setFromPoints(linePoints);
+    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+    
+    return new THREE.Line(lineGeometry, lineMaterial);
+  } catch (error) {
+    console.error('Error creating vertical wire:', error);
+    return null;
   }
+}
   
   private async showInViewer(cmd: any): Promise<void> {
     let objectId = scope.context['_currentObjectId'];
@@ -291,6 +349,54 @@ export class ThreeJSCommandProcessor {
       this.glViewer.orbitControl.update();
     }
   }
+
+  // 添加新的方法到 ThreeJSCommandProcessor 类中
+private async generateWireMesh(cmd: any): Promise<string> {
+  let objectId = scope.context['_currentObjectId'];
+  
+  // 处理子命令获取模型
+  if (cmd.children && cmd.children.length > 0) {
+    for (const child of cmd.children) {
+      const result = await this.processCommand(child);
+      if (result) objectId = result;
+    }
+  }
+  
+  const model = this.currentObjects.get(objectId);
+  if (!model || !(model instanceof THREE.Mesh)) {
+    console.error('No valid mesh found for wire generation');
+    return null;
+  }
+  
+  const wireGroup = new THREE.Group();
+  const hCount = cmd.args.hCount || 10;
+  const vCount = cmd.args.vCount || 10;
+  
+  // 生成水平线框
+  const boundingBox = new THREE.Box3().setFromObject(model);
+  const size = boundingBox.getSize(new THREE.Vector3());
+  
+  // 水平线框
+  for (let i = 0; i < hCount; i++) {
+    const y = boundingBox.min.y + (i + 0.5) * (size.y / hCount);
+    const wire = this.createHorizontalWire(model, y, boundingBox, size);
+    if (wire) wireGroup.add(wire);
+  }
+  
+  // 垂直线框
+  for (let i = 0; i < vCount; i++) {
+    const z = boundingBox.min.z + (i + 0.5) * (size.z / vCount);
+    const wire = this.createVerticalWire(model, z, boundingBox, size);
+    if (wire) wireGroup.add(wire);
+  }
+  
+  const id = `wire_mesh_${Date.now()}`;
+  this.currentObjects.set(id, wireGroup);
+  scope.setVar('_currentObjectId', id);
+  scope.setVar('_wireMesh', wireGroup);
+  
+  return id;
+}
   
   private async exportWireCSV(cmd: any): Promise<void> {
     const filename = cmd.args.filename || 'wire_mesh';
