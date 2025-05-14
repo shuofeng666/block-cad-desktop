@@ -22,8 +22,8 @@ import {
 } from "./actions";
 import { ThreeJSCommandProcessor } from "./threejs/ThreeJSCommandProcessor";
 import { registerThreeJSBlocks } from "./blocks/ThreeJSBlocks";
-import { scope } from "./jscad/Scope"; // 需要添加这个导入
-import { statusBar } from "./widgets/Statusbar"; // 需要添加这个导入
+import { scope } from "./jscad/Scope";
+import { statusBar } from "./widgets/Statusbar";
 
 // 首先加载块定义
 load_blocks();
@@ -57,6 +57,9 @@ if (t1) {
       // 使用新的渲染逻辑
       (async () => {
         try {
+          // 首先清空场景
+          glViewer.clearScene();
+          
           scope.reset();
           blockEditor.generateCode();
 
@@ -83,6 +86,30 @@ if (t1) {
       exportFile();
     } else if (cmd == "save") {
       saveFileAction(blockEditor.getBlocklyCode());
+    } else if (cmd == "export_csv") {
+      // 导出 Wire Mesh CSV
+      (async () => {
+        try {
+          const wireMesh = scope.context["_wireMesh"];
+          if (!wireMesh) {
+            statusBar.setStatus("No wire mesh found. Please generate a wire mesh first.", "warn", 0);
+            return;
+          }
+
+          const filename = prompt("Enter filename for CSV export:", "wire_mesh") || "wire_mesh";
+          
+          // 使用 ThreeJSProcessor 的导出功能
+          await threeJSProcessor.processCommand({
+            id: "export_wire_csv",
+            args: { filename }
+          });
+
+          statusBar.setStatus(`Wire mesh exported to ${filename}_*.csv`, "info", 0);
+        } catch (error) {
+          console.error("Error exporting CSV:", error);
+          statusBar.setStatus(`Error: ${error.message}`, "error", 0);
+        }
+      })();
     } else if (cmd == "wire_mesh_example") {
       const exampleCode = {
         blocks: {
@@ -95,14 +122,42 @@ if (t1) {
               },
               next: {
                 block: {
-                  type: "generate_wire_mesh",
+                  type: "rotate_model",
                   fields: {
-                    H_COUNT: "10",
-                    V_COUNT: "10",
+                    ROTATE_X: "45",
+                    ROTATE_Y: "0",
+                    ROTATE_Z: "0",
                   },
                   next: {
                     block: {
-                      type: "show_in_viewer",
+                      type: "scale_model",
+                      fields: {
+                        SCALE: "1.5",
+                      },
+                      next: {
+                        block: {
+                          type: "generate_wire_mesh",
+                          fields: {
+                            H_COUNT: "10",
+                            V_COUNT: "10",
+                            USE_TUBES: "TRUE",
+                            TUBE_THICKNESS: "1",
+                          },
+                          next: {
+                            block: {
+                              type: "show_in_viewer",
+                              next: {
+                                block: {
+                                  type: "export_wire_csv",
+                                  fields: {
+                                    FILENAME: "wire_mesh_example",
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
                     },
                   },
                 },
@@ -146,12 +201,17 @@ if (t1) {
     `<span class="material-symbols-outlined">upgrade</span>`,
     "Export to STL or OBJ"
   );
+  toolbar.addIcon(
+    "export_csv",
+    `<span class="material-symbols-outlined">table_view</span>`,
+    "Export Wire Mesh to CSV"
+  );
 
   // 添加 Wire Mesh 示例按钮
   toolbar.addIcon(
     "wire_mesh_example",
     `<span class="material-symbols-outlined">grid_3x3</span>`,
-    "Wire Mesh Example"
+    "Wire Mesh Example with Transforms"
   );
 }
 
