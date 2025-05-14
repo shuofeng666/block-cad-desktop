@@ -100,31 +100,48 @@ export class BlocklyEditor{
         this.blocklyDiv.classList.add("blocklyDiv");
         this.blocklyArea.appendChild(this.blocklyDiv);
         
-        var options:Blockly.BlocklyOptions = {
-            toolbox: toolbox,
-            collapse: true,
-            comments: true,
-            disable: true,
-            maxBlocks: Infinity,
-            trashcan: false,
-            horizontalLayout: false,
-            toolboxPosition: 'start',
-            css: true,
-            media: 'https://blockly-demo.appspot.com/static/media/',
-            rtl: false,
-            scrollbars: true,
-            sounds: false,
-            //renderer: 'zelos',
-            oneBasedIndex: true,
-            zoom: {
-                controls: true,
-                startScale: 0.8,
-                maxScale: 3,
-                minScale: 0.3,
-                scaleSpeed: 1.2
-            },
-            theme: theme
-        };
+      // 在 BlockEditor.ts 的 constructor 中修改 options
+
+var options:Blockly.BlocklyOptions = {
+    toolbox: toolbox,
+    collapse: true,
+    comments: true,
+    disable: true,
+    maxBlocks: Infinity,
+    trashcan: false,
+    horizontalLayout: false,
+    toolboxPosition: 'start',
+    css: true,
+    media: 'https://blockly-demo.appspot.com/static/media/',
+    rtl: false,
+    scrollbars: true,
+    sounds: false,
+    //renderer: 'zelos',
+    oneBasedIndex: true,
+    zoom: {
+        controls: true,
+        startScale: 1.0,  // 修改初始缩放比例（原来是 0.8）
+        maxScale: 3,
+        minScale: 0.5,    // 提高最小缩放
+        scaleSpeed: 1.2
+    },
+    theme: theme,
+    // 添加网格配置，让块之间的间距更大
+    grid: {
+        spacing: 25,      // 网格间距（原默认是 20）
+        length: 3,
+        colour: '#ccc',
+        snap: true
+    },
+    // 调整块的渲染选项
+    renderer: 'geras', // 或者 'zelos' - 不同的渲染器有不同的样式
+    // 添加自定义缩放
+    move: {
+        scrollbars: true,
+        drag: true,
+        wheel: true
+    }
+};
         
         this.workspace = Blockly.inject(this.blocklyDiv, options);
         
