@@ -10,3 +10,6 @@ Scratch programming style 3d modelling software.Designed to simplify 3d modellin
 # Download 
 
 https://github.com/vivekg13186/block-cad-desktop/releases/
+
+use: yarn parcel
+yarn install

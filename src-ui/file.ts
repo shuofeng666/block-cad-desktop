@@ -1,57 +1,52 @@
-import { save, open } from "@tauri-apps/api/dialog";
-import { invoke } from '@tauri-apps/api/tauri'
+// 不再需要 Tauri 的导入
+// import { save, open } from "@tauri-apps/api/dialog";
+// import { invoke } from '@tauri-apps/api/tauri'
 
 export async function saveToFile(filename: string, data: string) {
-   // console.log("saveToFile",filename,data);
-    if(filename && data)
-        await invoke('write_file',{"filepath":filename ,content : data});
+    // 创建 Blob 并下载
+    const blob = new Blob([data], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
-
-
-export async function exportSaveFilePath(){
-    return await save({
-        title: "Export Model",
-        filters: [{
-            name: "Obj file",
-            extensions: ["obj"]
-        },{
-            name: "STL file",
-            extensions: ["stl"]
-        }]
-    });
+export async function exportSaveFilePath() {
+    // 返回一个默认文件名，让用户在浏览器下载时修改
+    return prompt("Enter filename for export:", "model.obj");
 }
-export async function  saveToNewFile (data:string,defaultPath) {
-    const filePath = await save({
-        title: "Save B-CAD File",
-        filters: [{
-            name: "B-CAD file",
-            extensions: ["bcad"]
-        }],
-        defaultPath:defaultPath
-    });
-   if(filePath){
-    await invoke('write_file',{"filepath":filePath ,content : data});
-    return filePath;
-   }
-   return null;
 
-};
-
-export async function openFile (){
-
-    var filepath  = await open({
-        title: "Open B-CAD File",
-        filters: [{
-            name: "B-CAD file",
-            extensions: ["bcad"]
-        }]
-    });
-    if(filepath){
-        //console.log(filepath);
-       var text = await invoke('read_file',{"filepath":filepath});
-       console.log(text);
-       return { filepath:filepath ,data : text};
+export async function saveToNewFile(data: string, defaultPath?: string) {
+    const filename = prompt("Save as:", defaultPath || "drawing.bcad");
+    if (filename) {
+        await saveToFile(filename, data);
+        return filename;
     }
     return null;
-};
+}
+
+export async function openFile() {
+    return new Promise((resolve, reject) => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.bcad';
+        
+        input.onchange = async (e) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
+            if (file) {
+                try {
+                    const text = await file.text();
+                    resolve({ filepath: file.name, data: text });
+                } catch (error) {
+                    reject(error);
+                }
+            }
+        };
+        
+        input.click();
+    });
+}
