@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { OrbitControls } from "../gl/OrbitControls";
-import { OBJLoader } from "../gl/OBJLoader";
+import { OrbitControls } from "./OrbitControls";
+import { OBJLoader } from "./OBJLoader";
 const textureLoader = new THREE.TextureLoader();
 const material = new THREE.MeshMatcapMaterial({
   color: 0xffffff,
