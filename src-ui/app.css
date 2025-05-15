@@ -35,8 +35,8 @@ body {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
-.left, .right {
-  width: 50%;
+.left {
+  width: 30%;
   flex-direction: column;
   display: flex;
   background: rgba(255, 255, 255, 0.9);
@@ -45,6 +45,20 @@ body {
   border: 2px solid #e1e8ed;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
+
+.right {
+  width: 70%;
+  flex-direction: column;
+  display: flex;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  margin: 8px;
+  border: 2px solid #e1e8ed;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+
+
 
 /* 块编辑区改进 */
 #block-area {
