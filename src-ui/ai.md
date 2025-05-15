@@ -1,295 +1,315 @@
-# Block CAD 项目 - AI 开发助手指南
+# Block CAD Project - AI Development Guide----------我们交流项目用中文，但是软件里面的一切内容写英语
 
-## 项目概述
+## Project Overview
 
-Block CAD 是一个基于 Web 的 3D 建模应用程序，使用 Blockly 作为可视化编程界面，Three.js 作为 3D 渲染引擎。本文档旨在帮助 AI 助手理解项目架构，以便协助后续开发。
+Block CAD is a web-based 3D modeling application that uses Blockly for visual programming interface and Three.js as the 3D rendering engine. This document is designed to help AI assistants understand the project architecture to assist with future development.
 
-## 技术栈
+## Tech Stack
 
-- **前端框架**：纯 JavaScript/TypeScript (无框架)
-- **3D 引擎**：Three.js
-- **可视化编程**：Blockly
-- **构建工具**：使用模块化导入 (import/export)
+- **Frontend Framework**: Pure JavaScript/TypeScript (no framework)
+- **3D Engine**: Three.js
+- **Visual Programming**: Blockly
+- **Build Tools**: Module imports (import/export)
 
-## 核心概念
+## Core Concepts
 
-### 命令模式
+### Command Pattern
 
-项目采用命令模式设计，用户通过 Blockly 界面创建的块被转换为命令对象，然后由命令处理器执行转换为 3D 操作。
+The project follows a command pattern design where blocks created via the Blockly interface are converted to command objects, which are then executed by a command processor to perform 3D operations.
 
 ```
-Blockly 块 → Command 对象 → 3D 操作 → 渲染结果
+Blockly Blocks → Command Objects → 3D Operations → Rendered Results
 ```
 
-### 作用域系统
+### Scope System
 
-使用嵌套作用域管理变量和命令执行上下文，支持命令的嵌套和作用域隔离。
+A nested scope system manages variables and command execution context, supporting command nesting and scope isolation.
 
-### 双向交互式控件系统
+### Bidirectional Interactive Control System
 
-通过右侧面板中的交互式控件，用户可以实时调整 3D 模型的变换参数（如旋转、缩放、平移），并且这些调整会直接反映在 3D 场景中。系统实现了完整的双向数据绑定机制：
+Through interactive controls in the right panel, users can adjust the transformation parameters (rotation, scaling, translation) of 3D models in real-time, with changes directly reflected in the 3D scene. The system implements a complete bidirectional data binding mechanism:
 
-1. **块命令到控件**：当用户在 Blockly 中添加变换块并运行时，对应的控件会显示在右侧面板中
-2. **控件到模型**：用户可通过拖动控件直接修改 3D 模型，无需修改 Blockly 块
-3. **状态同步**：保持块、控件和 3D 模型的状态同步，确保一致的用户体验
+1. **Block Commands to Controls**: When users add transformation blocks in Blockly and run them, corresponding controls appear in the right panel
+2. **Controls to Model**: Users can modify 3D models directly by adjusting controls, without modifying Blockly blocks
+3. **State Synchronization**: Maintains synchronized states between blocks, controls, and 3D models, ensuring consistent user experience
 
-## 关键文件说明
+## Key Files Description
 
-### 核心引擎
+### Core Engine
 
-- `src-ui/core/Scope.ts`: 作用域和命令系统
-- `src-ui/core/BlockEditor.ts`: Blockly 编辑器封装
-- `src-ui/core/actions.ts`: 应用程序动作处理
+- `src-ui/core/Scope.ts`: Scope and command system
+- `src-ui/core/BlockEditor.ts`: Blockly editor wrapper
+- `src-ui/core/actions.ts`: Application action handling
 
-### 3D 渲染
+### 3D Rendering
 
-- `src-ui/threejs/GLViewer.ts`: Three.js 渲染器封装
-- `src-ui/threejs/ThreeJSCommandProcessor.ts`: 命令到 3D 操作的转换以及交互式控件处理
+- `src-ui/threejs/GLViewer.ts`: Three.js renderer wrapper
+- `src-ui/threejs/ThreeJSCommandProcessor.ts`: Command to 3D operation conversion and interactive control handling
 
-### 块定义
+### Block Definitions
 
-- `src-ui/blocks/blocks.ts`: 块系统初始化
-- `src-ui/blocks/ThreeJSBlocks.ts`: 3D 操作相关块定义
-- `src-ui/blocks/FileUploadField.ts`: 文件上传字段实现
-- `src-ui/blocks/blocks_def.json`: 块定义 JSON 配置
+- `src-ui/blocks/blocks.ts`: Block system initialization
+- `src-ui/blocks/ThreeJSBlocks.ts`: 3D operation-related block definitions
+- `src-ui/blocks/FileUploadField.ts`: File upload field implementation
+- `src-ui/blocks/blocks_def.json`: Block definition JSON configuration
 
-### UI 组件
+### UI Components
 
-- `src-ui/components/Statusbar.ts`: 状态栏组件
-- `src-ui/components/Toolbar.ts`: 工具栏组件
-- `src-ui/components/ControlPanel.ts`: 交互式控制面板组件
-- `src-ui/components/control-panel.css`: 控制面板样式
+- `src-ui/components/Statusbar.ts`: Status bar component
+- `src-ui/components/Toolbar.ts`: Toolbar component
+- `src-ui/components/ControlPanel.ts`: Interactive control panel component
+- `src-ui/components/control-panel.css`: Control panel styling
 
-### 工具和实用函数
+### Utilities
 
-- `src-ui/utils/hull.js`: 凸包/凹包算法实现
-- `src-ui/utils/file.ts`: 文件操作工具
+- `src-ui/utils/hull.js`: Convex/concave hull algorithm implementation
+- `src-ui/utils/file.ts`: File operation utilities
 
-## 主要数据结构
+## Main Data Structures
 
-### Command 对象
+### Command Object
 
 ```typescript
 {
-  id: string,       // 命令类型标识符
-  args: object,     // 命令参数
-  children: array,  // 子命令
-  blk_def: object   // 块定义引用
+  id: string,       // Command type identifier
+  args: object,     // Command parameters
+  children: array,  // Child commands
+  blk_def: object   // Block definition reference
 }
 ```
 
-### 作用域系统
+### Scope System
 
 ```typescript
 Scope {
-  scopeItem: ScopeItem,  // 当前作用域
-  context: object        // 全局上下文
+  scopeItem: ScopeItem,  // Current scope
+  context: object        // Global context
 }
 
 ScopeItem {
-  parent: ScopeItem,     // 父作用域
-  items: Command[],      // 当前作用域中的命令
-  ctx: object            // 作用域变量
+  parent: ScopeItem,     // Parent scope
+  items: Command[],      // Commands in current scope
+  ctx: object            // Scope variables
 }
 ```
 
-### 交互式控件配置
+### Interactive Control Configuration
 
 ```typescript
 ControlConfig {
-  id: string,                   // 控件唯一标识符
-  type: "slider"|"number"|"checkbox", // 控件类型
-  label: string,                // 控件标签
-  min?: number,                 // 最小值（适用于数值型控件）
-  max?: number,                 // 最大值（适用于数值型控件）
-  step?: number,                // 步长（适用于数值型控件）
-  value: number|boolean,        // 控件当前值
-  onChange: (value) => void     // 值变化事件处理函数
+  id: string,                   // Control unique identifier
+  type: "slider"|"number"|"checkbox", // Control type
+  label: string,                // Control label
+  min?: number,                 // Minimum value (for numeric controls)
+  max?: number,                 // Maximum value (for numeric controls)
+  step?: number,                // Step (for numeric controls)
+  value: number|boolean,        // Current control value
+  onChange: (value) => void     // Value change event handler
 }
 ```
 
-### 3D 状态跟踪
+### 3D State Tracking
 
 ```typescript
-// ThreeJSCommandProcessor 类中的状态跟踪
-private currentObjects: Map<string, THREE.Object3D> // 存储所有模型对象的映射
-private currentSceneObject: THREE.Object3D | null   // 跟踪当前显示在场景中的对象
+// State tracking in ThreeJSCommandProcessor class
+private currentObjects: Map<string, THREE.Object3D> // Map of all model objects
+private currentSceneObject: THREE.Object3D | null   // Tracks the current object displayed in the scene
 
-// 变换状态存储在 scope.context 中
-scope.context["_rotateModelValues"]    // 存储旋转角度值
-scope.context["_scaleModelValue"]      // 存储缩放比例值
-scope.context["_translateModelValues"] // 存储平移距离值
+// Transformation states stored in scope.context
+scope.context["_rotateModelValues"]    // Stores rotation angle values
+scope.context["_scaleModelValue"]      // Stores scale ratio value
+scope.context["_translateModelValues"] // Stores translation distance values
 ```
 
-## 执行流程
+## Execution Flow
 
-1. **初始化**：
-   - 加载块定义
-   - 初始化 BlocklyEditor
-   - 创建 GLViewer
-   - 注册 ThreeJSBlocks
-   - 创建 ThreeJSCommandProcessor
-   - 初始化控制面板
+1. **Initialization**:
+   - Load block definitions
+   - Initialize BlocklyEditor
+   - Create GLViewer
+   - Register ThreeJSBlocks
+   - Create ThreeJSCommandProcessor
+   - Initialize control panel
 
-2. **用户交互**：
-   - 用户在 Blockly 界面上组装块
-   - 操作工具栏按钮
-   - 点击运行执行渲染
-   - 通过右侧控制面板实时调整参数
+2. **User Interaction**:
+   - User assembles blocks in Blockly interface
+   - Operates toolbar buttons
+   - Clicks run to execute rendering
+   - Adjusts parameters in real-time via the right control panel
 
-3. **渲染执行**：
-   - 清空当前场景
-   - 重置作用域
-   - BlocklyEditor 生成代码（生成 Command 对象）
-   - ThreeJSCommandProcessor 处理命令
-   - GLViewer 更新显示
-   - 显示与当前操作相关的控制面板
+3. **Rendering Execution**:
+   - Clear current scene
+   - Reset scope
+   - BlocklyEditor generates code (creating Command objects)
+   - ThreeJSCommandProcessor processes commands
+   - GLViewer updates display
+   - Display control panel relevant to current operations
    
-## 核心功能
+## Core Features
 
-### 1. STL 模型加载和显示
+### 1. STL Model Loading and Display
 
-支持加载 STL 模型文件并在 3D 环境中显示。通过 `upload_stl` 命令实现。
+Support for loading STL model files and displaying them in a 3D environment. Implemented through the `upload_stl` command.
 
-### 2. 基本 3D 形状创建
+### 2. Basic 3D Shape Creation
 
-提供创建基本 3D 形状的功能，如立方体。通过 `create_cube` 命令实现。
+Provides functionality to create basic 3D shapes, such as cubes. Implemented through the `create_cube` command.
 
-### 3. 线框网格生成
+### 3. Wire Mesh Generation
 
-基于 3D 模型生成线框网格，可用于工业设计参考。通过 `generate_wire_mesh` 命令实现。
+Generates wire mesh based on 3D models, useful for industrial design reference. Implemented through the `generate_wire_mesh` command.
 
-### 4. 变换操作
+### 4. Transformation Operations
 
-支持模型的旋转、缩放和平移操作，并提供交互式控件：
+Supports model rotation, scaling, and translation operations, with interactive controls:
 
-- **旋转模型**：通过 `rotate_model` 命令实现，控制面板提供 X、Y、Z 轴旋转角度控制
-- **缩放模型**：通过 `scale_model` 命令实现，控制面板提供缩放比例控制
-- **平移模型**：通过 `translate_model` 命令实现，控制面板提供 X、Y、Z 轴平移距离控制
+- **Rotate Model**: Implemented through the `rotate_model` command, control panel provides X, Y, Z axis rotation angle control
+- **Scale Model**: Implemented through the `scale_model` command, control panel provides scale ratio control
+- **Translate Model**: Implemented through the `translate_model` command, control panel provides X, Y, Z axis translation distance control
 
-### 5. 导出功能
+### 5. Export Functionality
 
-支持导出线框网格为 CSV 文件格式。通过 `export_wire_csv` 命令实现。
+Supports exporting wire mesh as CSV file format. Implemented through the `export_wire_csv` command.
 
-## 交互式控件系统详解
+## Interactive Control System Detailed Explanation
 
-### 控制面板组件
+### Control Panel Component
 
-`ControlPanel` 类是交互式控件系统的核心，提供以下功能：
+The `ControlPanel` class is the core of the interactive control system, providing functionalities like:
 
-- 创建和管理控制面板
-- 添加各种类型的控件（滑块、数字输入框、复选框）
-- 处理控件值变化事件
-- 更新控件显示
+- Creating and managing control panels
+- Adding various types of controls (sliders, number inputs, checkboxes)
+- Handling control value change events
+- Updating control display
 
-### 控件状态管理
+### Control State Management
 
-交互式控件状态通过 `scope.context` 存储，并在多个位置同步：
+Interactive control states are stored in `scope.context` and synchronized across multiple locations:
 
-1. **内存数据结构**：存储在 `scope.context` 中
-2. **场景显示对象**：活动显示的 3D 对象，由 `currentSceneObject` 跟踪
-3. **控制面板 UI**：右侧面板中的滑块和输入框
+1. **In-memory Data Structure**: Stored in `scope.context`
+2. **Scene Display Objects**: Actively displayed 3D objects, tracked by `currentSceneObject`
+3. **Control Panel UI**: Sliders and input fields in the right panel
 
-当任何一处发生变化时，系统会同步更新其它部分的状态，确保一致性。
+When changes occur in any of these locations, the system synchronizes the states across all other parts to ensure consistency.
 
-### 双向绑定实现
+### Combined Transformation Controls Implementation
 
-1. **从块到控件**：
-   - 块命令执行后，会根据命令类型显示相应控件
-   - 控件初始值设为当前对象的实际值（如当前旋转角度）
-   - 显示控件面板并注册变更事件处理函数
+A key enhancement to the system is the ability to display all applied transformations simultaneously in a single control panel. This is implemented through the `showCombinedTransformControls()` method in the `ThreeJSCommandProcessor` class.
 
-2. **从控件到模型**：
-   - 用户操作控件时，触发 `onChange` 事件
-   - 事件处理函数获取新值，并将其应用到：
-     a. 原始对象 (`currentObjects` 中的对象)
-     b. 场景中显示的对象 (`currentSceneObject`)
-   - 场景实时更新显示新的变换效果
+Key aspects of this implementation:
 
-### 具体实现方法
+1. **Unified Control Panel**: Instead of showing separate control panels for each transformation type, a single "Transform Controls" panel shows all applicable controls.
 
-1. **旋转控件**：
-   - 基于当前旋转角度显示 X/Y/Z 三个滑块
-   - 角度值以度为单位(-180°到+180°)显示给用户
-   - 内部转换为弧度进行 Three.js 计算
+2. **Conditional Display**: Only transformations that have been applied to the model will have their controls displayed in the panel.
 
-2. **缩放控件**：
-   - 显示单一缩放比例滑块
-   - 范围通常为 0.1 到 5.0
-   - 使用 `scale.set(value, value, value)` 实现均匀缩放
+3. **State Persistence**: All transformation states are preserved in `scope.context`, allowing them to be restored when controls are regenerated.
 
-3. **平移控件**：
-   - 基于当前位置显示 X/Y/Z 三个滑块
-   - 范围通常为 -100 到 +100
-   - 直接修改 `position` 属性
+4. **Real-Time Updates**: When any control is adjusted, changes are immediately applied to both the original object and its display representation.
 
-## 场景对象管理
+### Bidirectional Binding Implementation
 
-为了支持双向交互，系统使用了两类对象跟踪：
+1. **From Blocks to Controls**:
+   - After block command execution, controls are displayed based on command type
+   - Control initial values are set to the actual values of the current object
+   - Control panel is displayed and change event handlers are registered
 
-1. **模型存储库**：`currentObjects` Map 存储所有已创建对象
-2. **活动显示对象**：`currentSceneObject` 跟踪当前显示在场景中的对象
+2. **From Controls to Model**:
+   - When user operates controls, `onChange` events are triggered
+   - Event handlers get new values and apply them to:
+     a. Original objects (in `currentObjects` map)
+     b. Objects displayed in scene (`currentSceneObject`)
+   - Scene updates in real-time to show new transformation effects
 
-当用户通过控件修改属性时，系统同时更新两种对象，确保状态一致性。这样，当用户再次运行块代码时，状态能够无缝衔接。
+### Specific Implementation Methods
 
-## 注意事项与最佳实践
+1. **Rotation Controls**:
+   - Display X/Y/Z sliders based on current rotation angles
+   - Angle values are shown in degrees (-180° to +180°) for user-friendliness
+   - Internally converted to radians for Three.js calculations
 
-1. **状态一致性**：
-   - 确保控件初始值使用当前对象的实际值
-   - 控件操作时同步更新所有相关对象
-   - 在清除场景时重置所有状态
+2. **Scale Controls**:
+   - Displays a single scale ratio slider
+   - Range typically from 0.1 to 5.0
+   - Uses `scale.set(value, value, value)` for uniform scaling
 
-2. **角度与弧度转换**：
-   - 控件以度为单位显示旋转值，便于用户理解
-   - 内部计算需要在度与弧度之间正确转换
+3. **Translation Controls**:
+   - Displays X/Y/Z sliders based on current position
+   - Range typically from -100 to +100
+   - Directly modifies the `position` property
 
-3. **克隆与引用**：
-   - 显示对象是原始对象的克隆，需要单独维护状态
-   - 修改控件时需要同时更新原始对象和显示对象
+## Scene Object Management
 
-4. **性能考虑**：
-   - 控件值快速变化时可能引起频繁渲染
-   - 复杂模型时可考虑添加去抖动（debounce）机制
-   - 大型 STL 文件可能需要优化显示机制
+To support bidirectional interaction, the system uses two types of object tracking:
 
-5. **兼容性**：
-   - 依赖 WebGL 和现代浏览器功能
-   - 移动设备上控制面板布局需要响应式设计
+1. **Model Repository**: `currentObjects` Map stores all created objects
+2. **Active Display Object**: `currentSceneObject` tracks the object currently displayed in the scene
 
-## 扩展开发指南
+When users modify properties via controls, the system updates both types of objects, ensuring state consistency. This way, when users run block code again, states can seamlessly continue.
 
-### 添加新的变换类型
+## Notes and Best Practices
 
-1. 在 `ThreeJSBlocks.ts` 中定义新块
-2. 在 `ThreeJSCommandProcessor.ts` 中添加对应命令处理
-3. 设计适当的控制面板交互界面
-4. 实现双向数据绑定逻辑
+1. **State Consistency**:
+   - Ensure control initial values use the actual values of current objects
+   - Synchronize all related objects when operating controls
+   - Reset all states when clearing the scene
 
-### 增强控制面板功能
+2. **Angle and Radian Conversion**:
+   - Controls display rotation values in degrees for user understanding
+   - Internal calculations need correct conversion between degrees and radians
 
-1. 添加更多控件类型（如颜色选择器）
-2. 支持控件分组和折叠
-3. 添加预设值和快捷按钮
-4. 加入键盘快捷键支持
+3. **Cloning and References**:
+   - Display objects are clones of original objects, requiring separate state maintenance
+   - When modifying controls, both original and display objects need updates
 
-### 优化用户体验
+4. **Performance Considerations**:
+   - Rapid control value changes may cause frequent rendering
+   - Consider adding debounce mechanisms for complex models
+   - Large STL files may need optimized display mechanisms
 
-1. 为控件添加数值单位和提示
-2. 实现控件值的撤销/重做功能
-3. 添加动画过渡效果
-4. 开发更直观的3D gizmo交互控件
+5. **Compatibility**:
+   - Relies on WebGL and modern browser features
+   - Control panel layout needs responsive design for mobile devices
 
-## 开发调试技巧
+## Extension Development Guide
 
-1. 使用浏览器控制台查看对象属性和状态变化
-2. 监控控件值变化与对象变换的关联关系
-3. 添加详细日志以跟踪数据流向和转换过程
-4. 使用浏览器的元素检查器检查控制面板DOM结构
+### Adding New Transformation Types
 
-## 未来发展方向
+1. Define new blocks in `ThreeJSBlocks.ts`
+2. Add corresponding command processing in `ThreeJSCommandProcessor.ts`
+3. Design appropriate control panel interface
+4. Implement bidirectional data binding logic
+5. Update the `showCombinedTransformControls()` method to include the new transformation type
 
-1. 支持更多变换类型（如切片、boolean 操作）
-2. 实现基于物理的变换约束和碰撞检测
-3. 集成材质和纹理编辑功能
-4. 添加子对象和组件化支持
-5. 集成 VR/AR 预览功能
+### Enhancing Control Panel Functionality
+
+1. Add more control types (such as color pickers)
+2. Support control grouping and collapsing
+3. Add preset values and quick buttons
+4. Add keyboard shortcut support
+5. Implement control sections with headers for better organization of complex transformations
+
+### Optimizing User Experience
+
+1. Add value units and tooltips for controls
+2. Implement undo/redo functionality for control values
+3. Add animation transition effects
+4. Develop more intuitive 3D gizmo interactive controls
+5. Add ability to lock specific transformation axes
+
+## Development Debugging Tips
+
+1. Use browser console to view object properties and state changes
+2. Monitor the relationship between control value changes and object transformations
+3. Add detailed logs to track data flow and transformation processes
+4. Use browser's element inspector to examine control panel DOM structure
+5. Add visual debugging helpers to visualize transformation axes and origins
+
+## Future Development Directions
+
+1. Support more transformation types (slicing, boolean operations)
+2. Implement physics-based transformation constraints and collision detection
+3. Integrate material and texture editing functionality
+4. Add sub-object and component support
+5. Integrate VR/AR preview functionality
+6. Implement more advanced wire mesh controls (density, pattern, coloring)
+7. Add support for multi-object transformation and grouping

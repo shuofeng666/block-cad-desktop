@@ -113,10 +113,139 @@ export class ThreeJSCommandProcessor {
     );
   }
 
-  // ThreeJSCommandProcessor.ts 中添加旋转控件的实现
+  /**
+   * 创建一个合并所有变换控件的方法
+   */
+  private showCombinedTransformControls(): void {
+    if (!this.controlPanel) {
+      console.warn("[showCombinedTransformControls] Control panel not available");
+      return;
+    }
+    
+    const objectId = scope.context["_currentObjectId"];
+    if (!objectId) {
+      console.error("[showCombinedTransformControls] No current object ID found");
+      return;
+    }
+    
+    const object = this.currentObjects.get(objectId);
+    if (!object) {
+      console.error("[showCombinedTransformControls] Object not found with ID:", objectId);
+      return;
+    }
+    
+    console.log("[showCombinedTransformControls] Setting up combined transform controls for object:", object.type);
+    
+    // 清空当前控制面板
+    this.controlPanel.clear();
+    
+    // 设置一个新的"Transform Controls"面板
+    this.controlPanel.setCommand("transform_controls", "Transform Controls");
+
+    // 添加Rotate控件（如果之前应用过Rotate）
+    if (scope.context["_rotateModelValues"]) {
+      const rotateValues = scope.context["_rotateModelValues"];
+      console.log("[showCombinedTransformControls] Adding rotation controls with values:", rotateValues);
+      
+      // X Rotate控件
+      this.controlPanel.addControl({
+        id: "rotateX",
+        type: "slider",
+        label: "Rotate X",
+        min: -180,
+        max: 180,
+        step: 1,
+        value: rotateValues.rotateX || 0,
+        onChange: (value) => this.onRotateValueChange("rotateX", value as number),
+      });
+      
+      // Y Rotate控件
+      this.controlPanel.addControl({
+        id: "rotateY",
+        type: "slider",
+        label: "Rotate Y",
+        min: -180,
+        max: 180,
+        step: 1,
+        value: rotateValues.rotateY || 0,
+        onChange: (value) => this.onRotateValueChange("rotateY", value as number),
+      });
+      
+      // Z Rotate控件
+      this.controlPanel.addControl({
+        id: "rotateZ",
+        type: "slider",
+        label: "Rotate Z",
+        min: -180,
+        max: 180,
+        step: 1,
+        value: rotateValues.rotateZ || 0,
+        onChange: (value) => this.onRotateValueChange("rotateZ", value as number),
+      });
+    }
+    
+    // 添加缩放控件（如果之前应用过缩放）
+    if (scope.context["_scaleModelValue"]) {
+      console.log("[showCombinedTransformControls] Adding scale control with value:", scope.context["_scaleModelValue"]);
+      
+      // 创建缩放控件
+      this.controlPanel.addControl({
+        id: "scale",
+        type: "slider",
+        label: "Scale Factor",
+        min: 0.1,
+        max: 5.0,
+        step: 0.1,
+        value: object.scale.x, // 使用当前对象的实际缩放值
+        onChange: (value) => this.onScaleValueChange(value as number),
+      });
+    }
+    
+    // 添加Translate控件（如果之前应用过Translate）
+    if (scope.context["_translateModelValues"]) {
+      const translateValues = scope.context["_translateModelValues"];
+      console.log("[showCombinedTransformControls] Adding translation controls with values:", translateValues);
+      
+      // X Translate控件
+      this.controlPanel.addControl({
+        id: "translateX",
+        type: "slider",
+        label: "Translate X",
+        min: -100,
+        max: 100,
+        step: 1,
+        value: object.position.x, // 使用当前位置
+        onChange: (value) => this.onTranslateValueChange("translateX", value as number),
+      });
+      
+      // Y Translate控件
+      this.controlPanel.addControl({
+        id: "translateY",
+        type: "slider",
+        label: "Translate Y",
+        min: -100,
+        max: 100,
+        step: 1,
+        value: object.position.y,
+        onChange: (value) => this.onTranslateValueChange("translateY", value as number),
+      });
+      
+      // Z Translate控件
+      this.controlPanel.addControl({
+        id: "translateZ",
+        type: "slider",
+        label: "Translate Z",
+        min: -100,
+        max: 100,
+        step: 1,
+        value: object.position.z,
+        onChange: (value) => this.onTranslateValueChange("translateZ", value as number),
+      });
+    }
+  }
 
   /**
-   * 旋转模型方法实现，包含控制面板支持
+   * Rotate模型方法实现
    */
   private rotateModel(cmd: any): string {
     console.log("[rotateModel] Starting with args:", cmd.args);
@@ -156,7 +285,7 @@ export class ThreeJSCommandProcessor {
         scope.context["_rotateModelValues"]
       );
     } else {
-      // 累积旋转值
+      // 累积Rotate值
       const values = scope.context["_rotateModelValues"];
       values.rotateX += cmd.args.rotateX;
       values.rotateY += cmd.args.rotateY;
@@ -164,7 +293,7 @@ export class ThreeJSCommandProcessor {
       console.log("[rotateModel] Updated rotation values:", values);
     }
 
-    // 应用旋转变换
+    // 应用Rotate变换
     object.rotation.x += rotateX;
     object.rotation.y += rotateY;
     object.rotation.z += rotateZ;
@@ -175,63 +304,14 @@ export class ThreeJSCommandProcessor {
       z: (object.rotation.z * 180) / Math.PI,
     });
 
-    // 设置控制面板
-    if (this.controlPanel) {
-      if (this.controlPanel.getCurrentCommandId() !== "rotate_model") {
-        console.log("[rotateModel] Setting up control panel for rotation");
-        this.controlPanel.setCommand("rotate_model", "Rotate Model");
-
-        // X 旋转控件
-        this.controlPanel.addControl({
-          id: "rotateX",
-          type: "slider",
-          label: "Rotate X",
-          min: -180,
-          max: 180,
-          step: 1,
-          value: 0,
-          onChange: (value) =>
-            this.onRotateValueChange("rotateX", value as number),
-        });
-
-        // Y 旋转控件
-        this.controlPanel.addControl({
-          id: "rotateY",
-          type: "slider",
-          label: "Rotate Y",
-          min: -180,
-          max: 180,
-          step: 1,
-          value: 0,
-          onChange: (value) =>
-            this.onRotateValueChange("rotateY", value as number),
-        });
-
-        // Z 旋转控件
-        this.controlPanel.addControl({
-          id: "rotateZ",
-          type: "slider",
-          label: "Rotate Z",
-          min: -180,
-          max: 180,
-          step: 1,
-          value: 0,
-          onChange: (value) =>
-            this.onRotateValueChange("rotateZ", value as number),
-        });
-      } else {
-        // 不更新控件值，让用户自己调整
-        console.log("[rotateModel] Control panel already exists for rotation");
-      }
-    } else {
-      console.warn("[rotateModel] Control panel not available");
-    }
+    // 显示所有变换控件
+    this.showCombinedTransformControls();
 
     return objectId;
   }
 
   /**
-   * 处理旋转控件值变化
+   * 处理Rotate控件值变化
    */
   private onRotateValueChange(axis: string, value: number): void {
     console.log(`[onRotateValueChange] ${axis} changed to ${value}`);
@@ -254,12 +334,12 @@ export class ThreeJSCommandProcessor {
     // 将角度转换为弧度
     const angleRadians = (value * Math.PI) / 180;
 
-    // 获取当前物体的旋转值（以弧度为单位）
+    // 获取当前物体的Rotate值（以弧度为单位）
     const currentRotationX = object.rotation.x;
     const currentRotationY = object.rotation.y;
     const currentRotationZ = object.rotation.z;
 
-    // 根据轴设置新的旋转值
+    // 根据轴设置新的Rotate值
     switch (axis) {
       case "rotateX":
         object.rotation.x = angleRadians;
@@ -272,7 +352,7 @@ export class ThreeJSCommandProcessor {
         break;
     }
 
-    // 如果已经在场景中显示了对象，也更新其旋转
+    // 如果已经在场景中显示了对象，也更新其Rotate
     if (this.currentSceneObject) {
       switch (axis) {
         case "rotateX":
@@ -298,10 +378,8 @@ export class ThreeJSCommandProcessor {
     );
   }
 
-  // ThreeJSCommandProcessor.ts 中添加缩放控件的实现
-
   /**
-   * 缩放模型方法实现，包含控制面板支持
+   * 缩放模型方法实现
    */
   private scaleModel(cmd: any): string {
     console.log("[scaleModel] Starting with args:", cmd.args);
@@ -345,36 +423,8 @@ export class ThreeJSCommandProcessor {
     object.scale.multiplyScalar(scale);
     console.log("[scaleModel] Applied scale. New scale:", object.scale.x);
 
-    // 设置控制面板
-    // 设置控制面板
-    // 设置控制面板 - 这部分需要修改
-    if (this.controlPanel) {
-      if (this.controlPanel.getCurrentCommandId() !== "scale_model") {
-        console.log("[scaleModel] Setting up control panel for scaling");
-        this.controlPanel.setCommand("scale_model", "Scale Model");
-
-        // 创建缩放控件 - 使用当前对象的实际缩放值
-        this.controlPanel.addControl({
-          id: "scale",
-          type: "slider",
-          label: "Scale Factor",
-          min: 0.1,
-          max: 5.0,
-          step: 0.1,
-          value: object.scale.x, // 使用当前对象的实际缩放值
-          onChange: (value) => this.onScaleValueChange(value as number),
-        });
-      } else {
-        // 更新控件值为当前缩放值
-        this.controlPanel.updateControl("scale", object.scale.x);
-        console.log(
-          "[scaleModel] Updated control panel scale value:",
-          object.scale.x
-        );
-      }
-    } else {
-      console.warn("[scaleModel] Control panel not available");
-    }
+    // 显示所有变换控件
+    this.showCombinedTransformControls();
 
     return objectId;
   }
@@ -413,10 +463,8 @@ export class ThreeJSCommandProcessor {
     );
   }
 
-  // ThreeJSCommandProcessor.ts 中添加平移控件的实现
-
   /**
-   * 平移模型方法实现，包含控制面板支持
+   * Translate模型方法实现
    */
   private translateModel(cmd: any): string {
     console.log("[translateModel] Starting with args:", cmd.args);
@@ -452,7 +500,7 @@ export class ThreeJSCommandProcessor {
         scope.context["_translateModelValues"]
       );
     } else {
-      // 累积平移值
+      // 累积Translate值
       const values = scope.context["_translateModelValues"];
       values.translateX += cmd.args.translateX;
       values.translateY += cmd.args.translateY;
@@ -460,7 +508,7 @@ export class ThreeJSCommandProcessor {
       console.log("[translateModel] Updated translation values:", values);
     }
 
-    // 应用平移
+    // 应用Translate
     console.log("[translateModel] Current position before:", object.position);
     object.position.x += cmd.args.translateX;
     object.position.y += cmd.args.translateY;
@@ -470,67 +518,14 @@ export class ThreeJSCommandProcessor {
       object.position
     );
 
-    // 设置控制面板
-    if (this.controlPanel) {
-      if (this.controlPanel.getCurrentCommandId() !== "translate_model") {
-        console.log(
-          "[translateModel] Setting up control panel for translation"
-        );
-        this.controlPanel.setCommand("translate_model", "Translate Model");
-
-        // X 平移控件
-        this.controlPanel.addControl({
-          id: "translateX",
-          type: "slider",
-          label: "Translate X",
-          min: -100,
-          max: 100,
-          step: 1,
-          value: object.position.x, // 使用当前位置作为控件的初始值
-          onChange: (value) =>
-            this.onTranslateValueChange("translateX", value as number),
-        });
-
-        // Y 平移控件
-        this.controlPanel.addControl({
-          id: "translateY",
-          type: "slider",
-          label: "Translate Y",
-          min: -100,
-          max: 100,
-          step: 1,
-          value: object.position.y,
-          onChange: (value) =>
-            this.onTranslateValueChange("translateY", value as number),
-        });
-
-        // Z 平移控件
-        this.controlPanel.addControl({
-          id: "translateZ",
-          type: "slider",
-          label: "Translate Z",
-          min: -100,
-          max: 100,
-          step: 1,
-          value: object.position.z,
-          onChange: (value) =>
-            this.onTranslateValueChange("translateZ", value as number),
-        });
-      } else {
-        // 不更新控件值，让用户自己调整
-        console.log(
-          "[translateModel] Control panel already exists for translation"
-        );
-      }
-    } else {
-      console.warn("[translateModel] Control panel not available");
-    }
+    // 显示所有变换控件
+    this.showCombinedTransformControls();
 
     return objectId;
   }
 
   /**
-   * 处理平移控件值变化
+   * 处理Translate控件值变化
    */
   private onTranslateValueChange(axis: string, value: number): void {
     console.log(`[onTranslateValueChange] ${axis} changed to ${value}`);
@@ -986,6 +981,9 @@ export class ThreeJSCommandProcessor {
       this.glViewer.scene.add(ambientLight);
       this.glViewer.scene.add(directionalLight1);
       this.glViewer.scene.add(directionalLight2);
+      
+      // 显示所有应用的变换控件
+      this.showCombinedTransformControls();
     } else {
       console.error("[showInViewer] 未找到要显示的对象，ID:", objectId);
     }
