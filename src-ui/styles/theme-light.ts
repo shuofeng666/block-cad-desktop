@@ -67,8 +67,7 @@ const LargeBlocksTheme: Blockly.Theme = Blockly.Theme.defineTheme('large-blocks'
     insertionMarkerColour: '#fff',
     insertionMarkerOpacity: 0.3,
     scrollbarOpacity: 0.3,
-    cursorColour: '#d0d0ff',
-    blackBackground: '#333'
+    cursorColour: '#d0d0ff' 
   }
 });
 
