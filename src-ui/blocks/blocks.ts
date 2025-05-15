@@ -62,7 +62,7 @@ export function addToolboxCatogery(name: string) {
 
 
 import * as blocks_def from "./blocks_def.json";
-import { Command, scope } from "../jscad/Scope";
+import { Command, scope } from "../core/Scope";
 
 var blocks_hashmap = {};
 function block_init_wrapper(){

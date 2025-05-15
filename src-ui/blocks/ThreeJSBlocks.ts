@@ -1,7 +1,7 @@
 // src-ui/blocks/ThreeJSBlocks.ts
 import * as Blockly from "blockly";
-import { scope } from "../jscad/Scope";
-import { Command } from "../jscad/Scope";
+import { scope } from "../core/Scope";
+import { Command } from "../core/Scope";
 import { FieldFileUpload } from './FileUploadField';
 
 export function registerThreeJSBlocks(

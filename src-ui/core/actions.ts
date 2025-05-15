@@ -1,11 +1,11 @@
 import { BlocklyEditor } from "./BlockEditor";
-import { saveToFile, saveToNewFile, openFile, exportSaveFilePath } from "./file";
+import { saveToFile, saveToNewFile, openFile, exportSaveFilePath } from "../utils/file";
 import { objSerializer,stlSerializer } from "@jscad/io"
 
 
-import { statusBar } from "./widgets/Statusbar";
-import { GLViewer } from "./threejs/GLViewer";
-import { scope } from "./jscad/Scope";
+import { statusBar } from "../components/Statusbar";
+import { GLViewer } from "../threejs/GLViewer";
+import { scope } from "./Scope";
 //import { convertToJSCAD } from "./jscad/command2jscad";
 
 var current_filename: string | null = null;

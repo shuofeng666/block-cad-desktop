@@ -1,9 +1,9 @@
 import Split from "split.js";
-import { Toolbar } from "./widgets/Toolbar";
+import { Toolbar } from "./components/Toolbar";
 import { GLViewer } from "./threejs/GLViewer";
-import "./app.css";
-import { BlocklyEditor } from "./BlockEditor";
-import LightTheme from "./theme-light";
+import "./styles/app.css";
+import { BlocklyEditor } from "./core/BlockEditor";
+import LightTheme from "./styles/theme-light";
 import {
   getBlocks,
   getToolbox,
@@ -19,11 +19,11 @@ import {
   exportFile,
   saveFileAction,
   newFile,
-} from "./actions";
+} from "./core/actions";
 import { ThreeJSCommandProcessor } from "./threejs/ThreeJSCommandProcessor";
 import { registerThreeJSBlocks } from "./blocks/ThreeJSBlocks";
-import { scope } from "./jscad/Scope";
-import { statusBar } from "./widgets/Statusbar";
+import { scope } from "./core/Scope";
+import { statusBar } from "./components/Statusbar";
 
 // 首先加载块定义
 load_blocks();

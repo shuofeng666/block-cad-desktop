@@ -2,7 +2,7 @@
 import * as THREE from "three";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader";
 import { hull } from "../utils/hull";
-import { scope } from "../jscad/Scope";
+import { scope } from "../core/Scope";
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 export class ThreeJSCommandProcessor {
