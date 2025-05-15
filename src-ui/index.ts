@@ -39,8 +39,8 @@ var blockEditor = new BlocklyEditor(
 
 // 分割面板
 Split([".left", ".right"], {
-  sizes: [50, 50],
-  gutterSize: 3,
+  sizes: [30, 70],
+  gutterSize: 5,
   onDrag: function (sizes) {
     resizeAll();
   },
