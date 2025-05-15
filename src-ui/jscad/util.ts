@@ -1,5 +1,5 @@
 import { scope } from "./Scope";
-import { codeGenerator } from "./blocks";
+import { codeGenerator } from "../blocks/blocks";
 import mozjexl from 'mozjexl';
 import * as jk from "@jscad/core";
 

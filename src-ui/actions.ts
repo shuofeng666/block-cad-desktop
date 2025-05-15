@@ -6,7 +6,7 @@ import { objSerializer,stlSerializer } from "@jscad/io"
 import { statusBar } from "./widgets/Statusbar";
 import { GLViewer } from "./gl/GLViewer";
 import { scope } from "./jscad/Scope";
-import { convertToJSCAD } from "./jscad/command2jscad";
+//import { convertToJSCAD } from "./jscad/command2jscad";
 
 var current_filename: string | null = null;
 

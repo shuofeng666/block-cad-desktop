@@ -10,7 +10,7 @@ import {
   getCodeGenerator,
   load_blocks,
   addToolboxCatogery,
-} from "./jscad/blocks";
+} from "./blocks/blocks";
 import {
   renderAction,
   initAction,
