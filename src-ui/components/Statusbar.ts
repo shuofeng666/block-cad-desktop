@@ -22,7 +22,7 @@ import "./status.css"
     
         
         this.progressElement.setAttribute("max", "100");
-        this.setStatus("Welcome to Block CAD", "info", 0);
+        this.setStatus("Welcome to CAMBlock", "info", 0);
     
   
     
