@@ -1,4 +1,6 @@
 import Split from "split.js";
+import { ControlPanel } from "./components/ControlPanel";
+import "./components/control-panel.css";
 import { Toolbar } from "./components/Toolbar";
 import { GLViewer } from "./threejs/GLViewer";
 import "./styles/app.css";
@@ -222,11 +224,31 @@ if (t2) {
   glViewer = new GLViewer(t2);
 }
 
+var controlPanelElement = document.getElementById("control-panel") as HTMLDivElement;
+var controlPanel: ControlPanel;
+if (controlPanelElement) {
+  controlPanel = new ControlPanel(controlPanelElement);
+} else {
+  console.warn("Control panel container element not found in DOM");
+  // 创建一个临时控制面板容器
+  controlPanelElement = document.createElement("div");
+  controlPanelElement.id = "control-panel";
+  
+  // 添加到右侧面板
+  const rightPanel = document.querySelector(".right");
+  if (rightPanel) {
+    rightPanel.appendChild(controlPanelElement);
+    controlPanel = new ControlPanel(controlPanelElement);
+  } else {
+    console.error("Right panel not found, control panel will not be available");
+  }
+}
+
 // 注册 Three.js 块（在创建 GLViewer 之后）
 registerThreeJSBlocks(getCodeGenerator(), addToolboxCatogery);
 
 // 创建 Three.js 处理器（必须在 GLViewer 之后创建）
-const threeJSProcessor = new ThreeJSCommandProcessor(glViewer);
+const threeJSProcessor = new ThreeJSCommandProcessor(glViewer, controlPanel);
 
 // 窗口调整大小处理
 function resizeAll() {
