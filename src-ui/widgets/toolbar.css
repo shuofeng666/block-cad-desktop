@@ -1,111 +1,256 @@
+/* 工具栏 - 现代儿童友好风格 */
 .toolbar {
-  width: 100%;
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 8px 16px;
+  padding: 10px 16px;
   gap: 12px;
-  background: linear-gradient(to bottom, #2c2c2c, #262626);
-  border-bottom: 1px solid #444;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.9), rgba(248, 249, 250, 0.9));
+  border-bottom: 2px solid #e9ecef;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: visible; /* 确保工具提示可以显示 */
+  margin: 0; /* 确保没有外边距 */
+  border-radius: 8px 8px 0 0; /* 只有顶部圆角 */
+}
+
+/* 工具栏背景装饰 */
+.toolbar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    rgba(108, 92, 231, 0.05) 0%, 
+    transparent 50%, 
+    rgba(162, 155, 254, 0.05) 100%);
+  pointer-events: none;
 }
 
 .toolbar-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 12px;
-  color: #d1d5db;
-  background-color: transparent;
-  border-radius: 8px;
-  font-size: 14px;
+  padding: 10px 14px;
+  color: #5f3dc4;
+  background: rgba(108, 92, 231, 0.08);
+  border-radius: 10px;
+  font-size: 15px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  border: 1px solid transparent;
+  border: 2px solid transparent;
+  font-weight: 500;
+  overflow: hidden;
 }
 
 .toolbar-icon:hover {
   color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(135deg, #6c5ce7 0%, #5f4dd6 100%);
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.25);
 }
 
 .toolbar-icon:active {
   transform: translateY(0);
-  box-shadow: none;
-  background-color: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 2px 6px rgba(108, 92, 231, 0.2);
+  background: linear-gradient(135deg, #5f4dd6 0%, #5441c8 100%);
 }
 
 .toolbar-icon span {
-  font-size: 20px;
+  font-size: 22px;
+  transition: transform 0.3s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.toolbar-icon:hover span {
+  transform: scale(1.1);
+}
+
+/* 工具提示 - 显示在图标上方 */
+.toolbar-icon[title]::after {
+  content: attr(title);
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.8) translateY(10px);
+  background: #2d3748;
+  color: #ffffff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+}
+
+/* 工具提示箭头 */
+.toolbar-icon[title]::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.8) translateY(10px);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #2d3748;
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* 悬停时显示工具提示 */
+.toolbar-icon:hover::after,
+.toolbar-icon:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) scale(1) translateY(0);
+}
+
+/* 涟漪效果（使用内部元素） */
+.toolbar-icon {
+  position: relative;
+  overflow: hidden;
+}
+
+/* 点击涟漪动画 */
+@keyframes ripple {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0.5;
+  }
+  100% {
+    width: 100px;
+    height: 100px;
+    opacity: 0;
+  }
+}
+
+/* 需要通过 JavaScript 添加涟漪效果 */
+.toolbar-icon .ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: ripple 0.6s ease-out;
 }
 
 /* 分隔符 */
 .toolbar-separator {
-  width: 1px;
-  height: 24px;
-  background-color: #444;
-  margin: 0 8px;
+  width: 2px;
+  height: 28px;
+  background: linear-gradient(to bottom, 
+    transparent 0%, 
+    #e9ecef 20%, 
+    #e9ecef 80%, 
+    transparent 100%);
+  margin: 0 12px;
+  border-radius: 1px;
 }
 
-/* 添加涟漪效果 */
-.toolbar-icon::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.3);
-  transform: translate(-50%, -50%);
-  transition: width 0.3s, height 0.3s;
+/* 特殊图标效果 */
+.toolbar-icon.active {
+  background: linear-gradient(135deg, #6c5ce7 0%, #5f4dd6 100%);
+  color: #ffffff;
+  box-shadow: 0 3px 8px rgba(108, 92, 231, 0.3);
 }
 
-.toolbar-icon:active::before {
-  width: 40px;
-  height: 40px;
+/* 图标动画 */
+@keyframes icon-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.95); }
 }
 
-/* 工具提示样式 */
-.toolbar-icon::after {
-  content: attr(title);
-  position: absolute;
-  bottom: -32px;
-  left: 50%;
-  transform: translateX(-50%) scale(0.8);
-  background-color: rgba(0, 0, 0, 0.9);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.2s ease;
+.toolbar-icon:active span {
+  animation: icon-bounce 0.3s ease;
 }
 
-.toolbar-icon:hover::after {
-  opacity: 1;
-  transform: translateX(-50%) scale(1);
+/* 特殊按钮样式 */
+.toolbar-icon.primary {
+  background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+  color: #ffffff;
+}
+
+.toolbar-icon.primary:hover {
+  background: linear-gradient(135deg, #00a885 0%, #00bfba 100%);
+  box-shadow: 0 4px 12px rgba(0, 206, 201, 0.3);
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
   .toolbar {
-    padding: 6px 12px;
-    gap: 8px;
+    padding: 8px 16px;
+    gap: 12px;
     flex-wrap: wrap;
   }
   
   .toolbar-icon {
-    padding: 6px 8px;
+    padding: 8px 10px;
   }
   
   .toolbar-icon span {
-    font-size: 18px;
+    font-size: 20px;
   }
+  
+  .toolbar-separator {
+    display: none;
+  }
+  
+  /* 移动端工具提示显示在下方 */
+  .toolbar-icon[title]::after {
+    bottom: auto;
+    top: calc(100% + 10px);
+  }
+  
+  .toolbar-icon[title]::before {
+    bottom: auto;
+    top: calc(100% + 2px);
+    border-top: none;
+    border-bottom: 6px solid #2d3748;
+  }
+}
+
+/* 禁用状态 */
+.toolbar-icon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.toolbar-icon:disabled:hover {
+  background: rgba(108, 92, 231, 0.08);
+  color: #5f3dc4;
+  box-shadow: none;
+}
+
+.toolbar-icon:disabled::after,
+.toolbar-icon:disabled::before {
+  display: none;
+}
+
+/* 加载状态 */
+.toolbar-icon.loading span {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 防止选中文本 */
+.toolbar * {
+  user-select: none;
 }

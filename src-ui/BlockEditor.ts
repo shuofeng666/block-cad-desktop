@@ -117,8 +117,14 @@ export class BlocklyEditor {
         Blockly.FieldDropdown.BORDER_RECT_DEFAULT = 6;  // 下拉框边距
         
         // === 创建 blocklyDiv ===
+
+        // === 创建 blocklyDiv ===
         this.blocklyDiv = document.createElement("div");
         this.blocklyDiv.style.position = "absolute";
+        this.blocklyDiv.style.width = "100%";
+        this.blocklyDiv.style.height = "100%";
+        this.blocklyDiv.style.top = "0";
+        this.blocklyDiv.style.left = "0";
         this.blocklyDiv.classList.add("blocklyDiv");
         this.blocklyArea.appendChild(this.blocklyDiv);
         
@@ -195,18 +201,8 @@ export class BlocklyEditor {
         return this.codeGenerator.workspaceToCode(this.workspace);
     }
     
-    resizeEditor() {
-        var element = this.blocklyArea;
-        let x = 0;
-        let y = 0;
-        do {
-            x += element.offsetLeft;
-            y += element.offsetTop;
-            element = element.offsetParent;
-        } while (element);
-        // Position blocklyDiv over blocklyArea.
-        this.blocklyDiv.style.left = x + 'px';
-        this.blocklyDiv.style.top = y + 'px';
+     resizeEditor() {
+        // 直接使用 blocklyArea 的尺寸，不需要计算偏移
         this.blocklyDiv.style.width = this.blocklyArea.offsetWidth + 'px';
         this.blocklyDiv.style.height = this.blocklyArea.offsetHeight + 'px';
         Blockly.svgResize(this.workspace);
