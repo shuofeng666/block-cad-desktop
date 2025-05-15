@@ -1,6 +1,6 @@
 import Split from "split.js";
 import { Toolbar } from "./widgets/Toolbar";
-import { GLViewer } from "./gl/GLViewer";
+import { GLViewer } from "./threejs/GLViewer";
 import "./app.css";
 import { BlocklyEditor } from "./BlockEditor";
 import LightTheme from "./theme-light";

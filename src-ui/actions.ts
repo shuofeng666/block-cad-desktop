@@ -4,7 +4,7 @@ import { objSerializer,stlSerializer } from "@jscad/io"
 
 
 import { statusBar } from "./widgets/Statusbar";
-import { GLViewer } from "./gl/GLViewer";
+import { GLViewer } from "./threejs/GLViewer";
 import { scope } from "./jscad/Scope";
 //import { convertToJSCAD } from "./jscad/command2jscad";
 
