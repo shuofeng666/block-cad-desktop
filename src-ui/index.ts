@@ -8,6 +8,7 @@ import { GLViewer } from "./threejs/GLViewer";
 import "./styles/app.css";
 import { BlocklyEditor } from "./core/BlockEditor";
 import LightTheme from "./styles/theme-light";
+import { registerWireMeshComponentBlocks } from "./blocks/WireMeshComponentBlocks";
 import {
   getBlocks,
   getToolbox,
@@ -171,7 +172,75 @@ if (t1) {
         },
       };
       blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
-    } 
+    } else if (cmd == "component_wire_mesh_example") {
+  const exampleCode = {
+    blocks: {
+      languageVersion: 0,
+      blocks: [
+        {
+          type: "upload_stl",
+          fields: {
+            FILE_UPLOAD: "default.stl",
+          },
+          next: {
+            block: {
+              type: "initialize_wire_mesh",
+              next: {
+                block: {
+                  type: "add_horizontal_wire",
+                  fields: {
+                    POSITION: "10",
+                    THICKNESS: "0.5",
+                    COLOR: "#ff0000",
+                  },
+                  next: {
+                    block: {
+                      type: "add_horizontal_wire",
+                      fields: {
+                        POSITION: "20",
+                        THICKNESS: "0.5",
+                        COLOR: "#ff0000",
+                      },
+                      next: {
+                        block: {
+                          type: "add_vertical_wire",
+                          fields: {
+                            POSITION: "15",
+                            THICKNESS: "0.5",
+                            COLOR: "#00ff00",
+                          },
+                          next: {
+                            block: {
+                              type: "convert_to_tubes",
+                              fields: {
+                                THICKNESS: "0.8",
+                              },
+                              next: {
+                                block: {
+                                  type: "collect_wire_mesh",
+                                  next: {
+                                    block: {
+                                      type: "show_in_viewer",
+                                    },
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      ],
+    },
+  };
+  blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
+}
     // 添加层叠切片示例
     else if (cmd == "stacked_layers_example") {
       const exampleCode = {
@@ -260,16 +329,7 @@ if (t1) {
     `<span class="material-symbols-outlined">play_arrow</span>`,
     "Render Drawing"
   );
-  toolbar.addIcon(
-    "export",
-    `<span class="material-symbols-outlined">upgrade</span>`,
-    "Export to STL or OBJ"
-  );
-  toolbar.addIcon(
-    "export_csv",
-    `<span class="material-symbols-outlined">table_view</span>`,
-    "Export Wire Mesh to CSV"
-  );
+ 
 
   // 添加 Wire Mesh 示例按钮
   toolbar.addIcon(
@@ -277,6 +337,12 @@ if (t1) {
     `<span class="material-symbols-outlined">grid_3x3</span>`,
     "Wire Mesh Example with Transforms"
   );
+
+  toolbar.addIcon(
+  "component_wire_mesh_example",
+  `<span class="material-symbols-outlined">grid_4x4</span>`,
+  "Component Wire Mesh Example"
+);
   
   // 添加层叠切片示例按钮
   toolbar.addIcon(
@@ -315,7 +381,7 @@ if (controlPanelElement) {
 
 // 注册 Three.js 块（在创建 GLViewer 之后）
 registerThreeJSBlocks(getCodeGenerator(), addToolboxCatogery);
-
+registerWireMeshComponentBlocks(getCodeGenerator(), addToolboxCatogery);
 // 创建 Three.js 处理器（必须在 GLViewer 之后创建）
 const threeJSProcessor = new ThreeJSCommandProcessor(glViewer, controlPanel);
 
