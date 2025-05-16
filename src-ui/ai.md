@@ -190,6 +190,158 @@ Generates stacked layers representation for laser cutting fabrication from 3D mo
 - Original model is hidden by default, with an option to show/hide
 - Exports SVG files for use with laser cutters
 
+## Development Roadmap
+
+This roadmap outlines the incremental approach to enhancing CAMblock by first implementing component-based versions of existing features, then extending to more capabilities.
+
+### Phase 1: Component-Based Wire Mesh Generator with Basic Programming Constructs
+
+**Goal**: Create a component-based version of the Wire Mesh Generator with basic programming support while maintaining the simple version.
+
+**Current Simple Version**:
+- Single block approach with predefined parameters (horizontal/vertical wire count)
+- Limited customization through a few parameters
+- "Black box" implementation where internal process is hidden
+
+**New Component-Based Version Features**:
+- Break down wire mesh generation into fundamental operations
+- Allow fine-grained control over each wire's position, thickness, and appearance
+- Enable custom wire patterns through explicit placement or programmatic generation
+- Provide greater understanding of the internal process
+- Include basic programming constructs for efficient wire generation
+
+**Implementation Requirements**:
+- Keep existing simple Wire Mesh blocks
+- Create new "Wire Mesh Components" category
+- Create new "Logic" category for programming constructs
+- Implement basic building blocks for wire mesh generation
+- Implement basic programming constructs (variables, loops, etc.)
+- Extend command processor to handle these component commands
+- Ensure compatibility between manual and programmatic approaches
+
+**Example Component-Based Wire Mesh Usage (Manual Approach)**:
+```
+// Load or create base model
+Upload STL file: [file]
+
+// The component-based approach instead of a single "generate_wire_mesh" block
+Initialize Wire Mesh
+  
+// Add specific horizontal wires
+Add Horizontal Wire at: 10 thickness: 0.5 color: red
+Add Horizontal Wire at: 20 thickness: 0.5 color: red
+Add Horizontal Wire at: 30 thickness: 0.5 color: red
+  
+// Add specific vertical wires
+Add Vertical Wire at: 15 thickness: 0.5 color: blue
+Add Vertical Wire at: 30 thickness: 0.5 color: blue
+  
+// Convert lines to 3D tubes
+Convert to Tubes thickness: 0.8
+  
+// Collect all wires into a single mesh
+Collect Wire Mesh
+
+// Show the result
+Show in 3D Viewer
+```
+
+**Example Component-Based Wire Mesh Usage (Programmatic Approach)**:
+```
+// Load or create base model
+Upload STL file: [file]
+
+// Initialize variables
+Set Variable "wireCount" to: 10
+Set Variable "modelHeight" to: 100
+Set Variable "spacing" to: modelHeight / wireCount
+
+// The component-based approach with programming constructs
+Initialize Wire Mesh
+  
+// Use for loop to add multiple horizontal wires with calculated positions
+For i from: 0 to: wireCount step: 1
+  Set Variable "position" to: i * spacing
+  Add Horizontal Wire at: position thickness: 0.5 color: red
+End For
+  
+// Use for loop to add multiple vertical wires with calculated positions
+For i from: 0 to: 5 step: 1
+  Set Variable "position" to: i * 20
+  Add Vertical Wire at: position thickness: 0.5 color: blue
+End For
+  
+// Convert lines to 3D tubes
+Convert to Tubes thickness: 0.8
+  
+// Collect all wires into a single mesh
+Collect Wire Mesh
+
+// Show the result
+Show in 3D Viewer
+```
+
+### Phase 2: Component-Based Approach for Other Features
+
+**Goal**: Extend the component-based approach to other features like transformations and stacked layers.
+
+**New Features**:
+- Component-based transformation operations
+- Decomposed stacked layers generation
+- Fine-grained control over each aspect of the process
+- More transparent and educational implementation
+
+**Implementation Requirements**:
+- Create component blocks for each feature
+- Ensure compatibility with existing simple blocks
+- Provide clear documentation on how components work together
+
+### Phase 3: Advanced Programming Constructs
+
+**Goal**: Introduce more sophisticated programming constructs for complex logic.
+
+**New Features**:
+- Complete conditional structures (if-then-else, if-elif-else)
+- Advanced loops (for-each, while)
+- Logical operators (AND, OR, NOT)
+- Comparison operators
+
+**Implementation Requirements**:
+- Enhance scope system to handle nested contexts properly
+- Implement loop execution in the command processor
+- Add support for complex conditions and expressions
+
+### Phase 4: Functions and Modularity
+
+**Goal**: Enable code reuse and modular program design.
+
+**New Features**:
+- Function definition blocks
+- Function parameter passing
+- Return value handling
+- Local variable scoping
+
+**Implementation Requirements**:
+- Implement function registration system
+- Create function call mechanism in command processor
+- Design function parameter passing
+- Manage local vs. global variable scoping
+
+### Phase 5: Advanced Geometry Operations
+
+**Goal**: Provide more powerful geometric modeling capabilities.
+
+**New Features**:
+- Boolean operations (union, subtract, intersect)
+- Parametric shape creation
+- Path operations and extrusions
+- Custom mesh manipulation
+
+**Implementation Requirements**:
+- Implement Three.js constructive solid geometry operations
+- Create high-level geometry manipulation commands
+- Design parameter systems for complex shapes
+
 ## Interactive Control System Detailed Explanation
 
 ### Control Panel Component
@@ -311,6 +463,637 @@ The stacked layers generation system is implemented to create physical manufactu
    - Monitors rotation, scaling, and translation operations
    - Implements debouncing to optimize performance during interactive control
    - Correctly handles all transformation types (rotation, scaling, translation)
+
+## Phase 1 Implementation Details: Component-Based Wire Mesh Generator
+
+To implement the Component-Based Wire Mesh Generator, we'll need to create new blocks that break down the wire mesh creation process into basic operations while preserving the existing simple wire mesh functionality.
+
+### New Block Categories and Types
+
+#### 1. Wire Mesh Components Category
+- **Initialize Wire Mesh Block**: Start defining a component-based wire mesh
+  ```
+  Initialize Wire Mesh
+  ```
+- **Add Horizontal Wire Block**: Add a specific horizontal wire
+  ```
+  Add Horizontal Wire at: [position] thickness: [thickness] color: [color]
+  ```
+- **Add Vertical Wire Block**: Add a specific vertical wire
+  ```
+  Add Vertical Wire at: [position] thickness: [thickness] color: [color]
+  ```
+- **Convert to Tubes Block**: Convert wire lines to 3D tube structures
+  ```
+  Convert to Tubes thickness: [thickness]
+  ```
+- **Collect Mesh Block**: Collect all wires into a single mesh group
+  ```
+  Collect Wire Mesh
+  ```
+- **Export Wire CSV Block**: Export wire data to CSV format
+  ```
+  Export Wire CSV filename: [filename]
+  ```
+
+### Command Processing Extensions
+
+The `ThreeJSCommandProcessor` class will need the following extensions:
+
+1. **Wire Mesh Context Management**:
+```typescript
+// New properties for ThreeJSCommandProcessor
+private wireMeshContext: {
+  isGenerating: boolean;
+  wires: {
+    type: 'horizontal' | 'vertical';
+    position: number;
+    thickness: number;
+    color: string;
+    points?: THREE.Vector3[]; // Store points for each wire
+    isLine: boolean; // Flag to indicate if it's a line or tube
+  }[];
+  currentWireId: number; // For tracking wires
+};
+
+// Initialize in constructor
+this.wireMeshContext = {
+  isGenerating: false,
+  wires: [],
+  currentWireId: 0
+};
+```
+
+2. **Wire Mesh Component Commands**:
+```typescript
+private initializeWireMesh(): void {
+  this.wireMeshContext.isGenerating = true;
+  this.wireMeshContext.wires = [];
+  this.wireMeshContext.currentWireId = 0;
+  console.log("[initializeWireMesh] Started new wire mesh definition");
+}
+
+private addHorizontalWire(position: number, thickness: number, color: string): void {
+  if (!this.wireMeshContext.isGenerating) {
+    console.error("[addHorizontalWire] No active wire mesh generation");
+    return;
+  }
+  
+  // Get current model
+  const objectId = scope.context["_currentObjectId"];
+  const model = this.currentObjects.get(objectId);
+  
+  if (!model || !(model instanceof THREE.Mesh)) {
+    console.error("[addHorizontalWire] No valid model found");
+    return;
+  }
+  
+  // Calculate actual Y position based on model height
+  const boundingBox = new THREE.Box3().setFromObject(model);
+  const yPosition = boundingBox.min.y + position;
+  
+  // Find intersection points with the model
+  const intersectionPoints = this.findHorizontalIntersectionPoints(model, yPosition);
+  
+  if (intersectionPoints.length < 3) {
+    console.error("[addHorizontalWire] Not enough intersection points found");
+    return;
+  }
+  
+  // Calculate wire thickness (used only if converted to tube)
+  const scaledThickness = thickness;
+  
+  // Store wire info - default as line (not tube)
+  const wireId = this.wireMeshContext.currentWireId++;
+  this.wireMeshContext.wires.push({
+    type: 'horizontal',
+    position,
+    thickness: scaledThickness,
+    color,
+    points: intersectionPoints,
+    isLine: true // Default to line, can be converted to tube later
+  });
+  
+  // Create visual line representation for preview
+  const lineGeometry = new THREE.BufferGeometry().setFromPoints(intersectionPoints);
+  const lineMaterial = new THREE.LineBasicMaterial({
+    color: parseInt(color.replace('#', '0x')),
+    linewidth: 1
+  });
+  const line = new THREE.Line(lineGeometry, lineMaterial);
+  
+  // Store in temporary object for later collection
+  const id = `wire_component_${wireId}`;
+  this.currentObjects.set(id, line);
+  
+  console.log(`[addHorizontalWire] Added at position=${position} with thickness=${thickness}, ID=${id}`);
+}
+
+private addVerticalWire(position: number, thickness: number, color: string): void {
+  if (!this.wireMeshContext.isGenerating) {
+    console.error("[addVerticalWire] No active wire mesh generation");
+    return;
+  }
+  
+  // Similar to addHorizontalWire but for vertical orientation
+  // Get current model
+  const objectId = scope.context["_currentObjectId"];
+  const model = this.currentObjects.get(objectId);
+  
+  if (!model || !(model instanceof THREE.Mesh)) {
+    console.error("[addVerticalWire] No valid model found");
+    return;
+  }
+  
+  // Calculate actual Z position based on model depth
+  const boundingBox = new THREE.Box3().setFromObject(model);
+  const zPosition = boundingBox.min.z + position;
+  
+  // Find intersection points with the model
+  const intersectionPoints = this.findVerticalIntersectionPoints(model, zPosition);
+  
+  if (intersectionPoints.length < 3) {
+    console.error("[addVerticalWire] Not enough intersection points found");
+    return;
+  }
+  
+  // Calculate wire thickness (used only if converted to tube)
+  const scaledThickness = thickness;
+  
+  // Store wire info - default as line (not tube)
+  const wireId = this.wireMeshContext.currentWireId++;
+  this.wireMeshContext.wires.push({
+    type: 'vertical',
+    position,
+    thickness: scaledThickness,
+    color,
+    points: intersectionPoints,
+    isLine: true // Default to line, can be converted to tube later
+  });
+  
+  // Create visual line representation for preview
+  const lineGeometry = new THREE.BufferGeometry().setFromPoints(intersectionPoints);
+  const lineMaterial = new THREE.LineBasicMaterial({
+    color: parseInt(color.replace('#', '0x')),
+    linewidth: 1
+  });
+  const line = new THREE.Line(lineGeometry, lineMaterial);
+  
+  // Store in temporary object for later collection
+  const id = `wire_component_${wireId}`;
+  this.currentObjects.set(id, line);
+  
+  console.log(`[addVerticalWire] Added at position=${position} with thickness=${thickness}, ID=${id}`);
+}
+
+private convertToTubes(tubeThickness: number): void {
+  if (!this.wireMeshContext.isGenerating) {
+    console.error("[convertToTubes] No active wire mesh generation");
+    return;
+  }
+  
+  console.log(`[convertToTubes] Converting wires to tubes with thickness=${tubeThickness}`);
+  
+  // Update all wires to be tubes instead of lines
+  for (const wire of this.wireMeshContext.wires) {
+    wire.isLine = false;
+    wire.thickness = tubeThickness;
+    
+    // Remove the line representation and create tube instead
+    if (wire.points && wire.points.length > 0) {
+      // Find the line object by ID
+      const wireId = this.wireMeshContext.wires.indexOf(wire);
+      const lineId = `wire_component_${wireId}`;
+      const line = this.currentObjects.get(lineId);
+      
+      if (line) {
+        // Create a path from points
+        const curve = new THREE.CatmullRomCurve3(wire.points, true);
+        const tubeGeometry = new THREE.TubeGeometry(
+          curve,
+          wire.points.length * 4, // segments
+          wire.thickness,
+          8, // radial segments
+          true // closed
+        );
+        
+        const tubeMaterial = new THREE.MeshPhongMaterial({
+          color: parseInt(wire.color.replace('#', '0x')),
+          shininess: 100,
+          specular: 0x222222,
+        });
+        
+        const tube = new THREE.Mesh(tubeGeometry, tubeMaterial);
+        
+        // Replace line with tube
+        this.currentObjects.set(lineId, tube);
+      }
+    }
+  }
+}
+
+private collectWireMesh(): string {
+  if (!this.wireMeshContext.isGenerating) {
+    console.error("[collectWireMesh] No active wire mesh generation");
+    return null;
+  }
+  
+  // Create a group to hold all wires
+  const wireGroup = new THREE.Group();
+  
+  // Add all wire objects to the group
+  for (let i = 0; i < this.wireMeshContext.wires.length; i++) {
+    const wireId = `wire_component_${i}`;
+    const wireObject = this.currentObjects.get(wireId);
+    
+    if (wireObject) {
+      wireGroup.add(wireObject.clone());
+    }
+  }
+  
+  // Reset context
+  this.wireMeshContext.isGenerating = false;
+  
+  // Save and return result
+  const id = `component_wire_mesh_${Date.now()}`;
+  this.currentObjects.set(id, wireGroup);
+  scope.setVar("_currentObjectId", id);
+  scope.setVar("_wireMesh", wireGroup);
+  
+  console.log(`[collectWireMesh] Collected ${this.wireMeshContext.wires.length} wires into mesh ID=${id}`);
+  
+  return id;
+}
+
+private exportWireCSV(filename: string): void {
+  if (!this.wireMeshContext.wires || this.wireMeshContext.wires.length === 0) {
+    console.error("[exportWireCSV] No wire data available");
+    return;
+  }
+  
+  console.log(`[exportWireCSV] Exporting wires to ${filename}.csv`);
+  
+  // Generate CSV content
+  let csvContent = "wire_type,position,x,y,z\n";
+  
+  for (const wire of this.wireMeshContext.wires) {
+    if (wire.points) {
+      for (const point of wire.points) {
+        csvContent += `${wire.type},${wire.position},${point.x.toFixed(2)},${point.y.toFixed(2)},${point.z.toFixed(2)}\n`;
+      }
+    }
+  }
+  
+  // Create download
+  const blob = new Blob([csvContent], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${filename}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+```
+
+3. **Helper Methods for Intersection Points**:
+```typescript
+private findHorizontalIntersectionPoints(model: THREE.Mesh, yPosition: number): THREE.Vector3[] {
+  const intersectionPoints: THREE.Vector3[] = [];
+  
+  // Create a horizontal plane at the specified Y position
+  const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -yPosition);
+  
+  // Process model geometry to find intersection points
+  const geometry = model.geometry;
+  const vertices = geometry.attributes.position;
+  const indices = geometry.index;
+  
+  // Use existing intersection finding logic similar to current implementation
+  // but adapted for component approach
+  
+  // Find intersection points between plane and model triangles
+  if (indices) {
+    for (let i = 0; i < indices.count; i += 3) {
+      const a = new THREE.Vector3().fromBufferAttribute(vertices, indices.getX(i));
+      const b = new THREE.Vector3().fromBufferAttribute(vertices, indices.getX(i + 1));
+      const c = new THREE.Vector3().fromBufferAttribute(vertices, indices.getX(i + 2));
+      
+      model.localToWorld(a);
+      model.localToWorld(b);
+      model.localToWorld(c);
+      
+      this.addTrianglePlaneIntersections(a, b, c, plane, intersectionPoints);
+    }
+  } else {
+    // Non-indexed geometry
+    for (let i = 0; i < vertices.count; i += 3) {
+      const a = new THREE.Vector3().fromBufferAttribute(vertices, i);
+      const b = new THREE.Vector3().fromBufferAttribute(vertices, i + 1);
+      const c = new THREE.Vector3().fromBufferAttribute(vertices, i + 2);
+      
+      model.localToWorld(a);
+      model.localToWorld(b);
+      model.localToWorld(c);
+      
+      this.addTrianglePlaneIntersections(a, b, c, plane, intersectionPoints);
+    }
+  }
+  
+  // If enough points, generate hull
+  if (intersectionPoints.length >= 3) {
+    // Use hull algorithm to generate clean 2D outline
+    const points2D = intersectionPoints.map(p => [p.x, p.z]);
+    const hullPoints = hull(points2D, 20);
+    
+    if (hullPoints && hullPoints.length >= 3) {
+      // Convert hull points back to 3D
+      return hullPoints.map(p => new THREE.Vector3(p[0], yPosition, p[1]));
+    }
+  }
+  
+  return intersectionPoints;
+}
+
+// Similar implementation for findVerticalIntersectionPoints
+
+private addTrianglePlaneIntersections(
+  a: THREE.Vector3, 
+  b: THREE.Vector3, 
+  c: THREE.Vector3, 
+  plane: THREE.Plane, 
+  points: THREE.Vector3[]
+): void {
+  const line1 = new THREE.Line3(a, b);
+  const line2 = new THREE.Line3(b, c);
+  const line3 = new THREE.Line3(c, a);
+  
+  const target = new THREE.Vector3();
+  
+  if (plane.intersectLine(line1, target)) points.push(target.clone());
+  if (plane.intersectLine(line2, target)) points.push(target.clone());
+  if (plane.intersectLine(line3, target)) points.push(target.clone());
+}
+```
+
+### Implementation Steps
+
+1. **Update Block Definitions**:
+   - Create new block definitions in a file like `WireMeshComponentBlocks.ts`
+   - Register these blocks with Blockly
+
+2. **Extend Command Processor**:
+   - Add wire mesh context and component commands in `ThreeJSCommandProcessor.ts`
+   - Implement intersection finding and wire creation methods
+
+3. **Ensure Compatibility**:
+   - Make sure the component approach can achieve the same results as the simple approach
+   - Ensure that collected wire meshes can be transformed like regular meshes
+
+4. **Update User Interface**:
+   - Add "Wire Mesh Components" toolbox category
+   - Design intuitive block appearances
+
+### Example Implementation of Wire Mesh Component Blocks
+
+Here's a preview of the implementation for the Wire Mesh Component blocks:
+
+```typescript
+// WireMeshComponentBlocks.ts
+export function registerWireMeshComponentBlocks(
+  codeGenerator: any,
+  addToolboxCategory: any
+) {
+  // Create the wire mesh components category
+  const wireMeshComponentsCategory = addToolboxCategory("Wire Mesh Components");
+  
+  // Block definitions
+  const blockDefinitions = {
+    "initialize_wire_mesh": {
+      category: wireMeshComponentsCategory,
+      definition: {
+        init: function () {
+          this.appendDummyInput()
+            .appendField("Initialize Wire Mesh");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(wireMeshComponentsCategory.colour);
+          this.setTooltip("Start defining a component-based wire mesh");
+        },
+      },
+      generator: function (block: any) {
+        const cmd = new Command("initialize_wire_mesh", {}, [], {});
+        scope.push(cmd);
+        return "";
+      },
+    },
+    
+    "add_horizontal_wire": {
+      category: wireMeshComponentsCategory,
+      definition: {
+        init: function () {
+          this.appendDummyInput()
+            .appendField("Add Horizontal Wire");
+          this.appendDummyInput()
+            .appendField("at:")
+            .appendField(new Blockly.FieldNumber(0), "POSITION")
+            .appendField("thickness:")
+            .appendField(new Blockly.FieldNumber(0.5, 0.1, 5, 0.1), "THICKNESS")
+            .appendField("color:")
+            .appendField(new Blockly.FieldColour("#ff0000"), "COLOR");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(wireMeshComponentsCategory.colour);
+        },
+      },
+      generator: function (block: any) {
+        const position = parseFloat(block.getFieldValue("POSITION"));
+        const thickness = parseFloat(block.getFieldValue("THICKNESS"));
+        const color = block.getFieldValue("COLOR");
+        
+        const cmd = new Command("add_horizontal_wire", { position, thickness, color }, [], {});
+        scope.push(cmd);
+        return "";
+      },
+    },
+    
+    "add_vertical_wire": {
+      category: wireMeshComponentsCategory,
+      definition: {
+        init: function () {
+          this.appendDummyInput()
+            .appendField("Add Vertical Wire");
+          this.appendDummyInput()
+            .appendField("at:")
+            .appendField(new Blockly.FieldNumber(0), "POSITION")
+            .appendField("thickness:")
+            .appendField(new Blockly.FieldNumber(0.5, 0.1, 5, 0.1), "THICKNESS")
+            .appendField("color:")
+            .appendField(new Blockly.FieldColour("#00ff00"), "COLOR");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(wireMeshComponentsCategory.colour);
+        },
+      },
+      generator: function (block: any) {
+        const position = parseFloat(block.getFieldValue("POSITION"));
+        const thickness = parseFloat(block.getFieldValue("THICKNESS"));
+        const color = block.getFieldValue("COLOR");
+        
+        const cmd = new Command("add_vertical_wire", { position, thickness, color }, [], {});
+        scope.push(cmd);
+        return "";
+      },
+    },
+    
+    "convert_to_tubes": {
+      category: wireMeshComponentsCategory,
+      definition: {
+        init: function () {
+          this.appendDummyInput()
+            .appendField("Convert to Tubes");
+          this.appendDummyInput()
+            .appendField("thickness:")
+            .appendField(new Blockly.FieldNumber(0.5, 0.1, 5, 0.1), "THICKNESS");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(wireMeshComponentsCategory.colour);
+        },
+      },
+      generator: function (block: any) {
+        const thickness = parseFloat(block.getFieldValue("THICKNESS"));
+        
+        const cmd = new Command("convert_to_tubes", { thickness }, [], {});
+        scope.push(cmd);
+        return "";
+      },
+    },
+    
+    "collect_wire_mesh": {
+      category: wireMeshComponentsCategory,
+      definition: {
+        init: function () {
+          this.appendDummyInput()
+            .appendField("Collect Wire Mesh");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(wireMeshComponentsCategory.colour);
+        },
+      },
+      generator: function (block: any) {
+        const cmd = new Command("collect_wire_mesh", {}, [], {});
+        scope.push(cmd);
+        return "";
+      },
+    },
+    
+    "export_wire_csv": {
+      category: wireMeshComponentsCategory,
+      definition: {
+        init: function () {
+          this.appendDummyInput()
+            .appendField("Export Wire CSV");
+          this.appendDummyInput()
+            .appendField("filename:")
+            .appendField(new Blockly.FieldTextInput("wire_mesh"), "FILENAME");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(wireMeshComponentsCategory.colour);
+        },
+      },
+      generator: function (block: any) {
+        const filename = block.getFieldValue("FILENAME");
+        
+        const cmd = new Command("export_wire_csv", { filename }, [], {});
+        scope.push(cmd);
+        return "";
+      },
+    },
+  };
+  
+  // Register all blocks
+  Object.entries(blockDefinitions).forEach(
+    ([blockId, { category, definition, generator }]) => {
+      Blockly.Blocks[blockId] = definition;
+      codeGenerator[blockId] = generator;
+
+      // Add to toolbox
+      category.contents.push({ kind: "block", type: blockId });
+    }
+  );
+}("Start defining a component-based wire mesh");
+        },
+      },
+      generator: function (block: any) {
+        const cmd = new Command("initialize_wire_mesh", {}, [], {});
+        scope.push(cmd);
+        return "";
+      },
+    },
+    
+    "add_horizontal_wire": {
+      category: wireMeshComponentsCategory,
+      definition: {
+        init: function () {
+          this.appendDummyInput()
+            .appendField("Add Horizontal Wire");
+          this.appendDummyInput()
+            .appendField("at:")
+            .appendField(new Blockly.FieldNumber(0), "POSITION")
+            .appendField("thickness:")
+            .appendField(new Blockly.FieldNumber(0.5, 0.1, 5, 0.1), "THICKNESS")
+            .appendField("color:")
+            .appendField(new Blockly.FieldColour("#ff0000"), "COLOR");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(wireMeshComponentsCategory.colour);
+        },
+      },
+      generator: function (block: any) {
+        const position = parseFloat(block.getFieldValue("POSITION"));
+        const thickness = parseFloat(block.getFieldValue("THICKNESS"));
+        const color = block.getFieldValue("COLOR");
+        
+        const cmd = new Command("add_horizontal_wire", { position, thickness, color }, [], {});
+        scope.push(cmd);
+        return "";
+      },
+    },
+    
+    // Similar definitions for other component blocks...
+    
+    "finalize_wire_mesh": {
+      category: wireMeshComponentsCategory,
+      definition: {
+        init: function () {
+          this.appendDummyInput()
+            .appendField("Finalize Wire Mesh");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(wireMeshComponentsCategory.colour);
+          this.setTooltip("Complete wire mesh generation");
+        },
+      },
+      generator: function (block: any) {
+        const cmd = new Command("finalize_wire_mesh", {}, [], {});
+        scope.push(cmd);
+        return "";
+      },
+    },
+  };
+  
+  // Register all blocks
+  Object.entries(blockDefinitions).forEach(
+    ([blockId, { category, definition, generator }]) => {
+      Blockly.Blocks[blockId] = definition;
+      codeGenerator[blockId] = generator;
+
+      // Add to toolbox
+      category.contents.push({ kind: "block", type: blockId });
+    }
+  );
+}
 
 ## Scene Object Management
 
