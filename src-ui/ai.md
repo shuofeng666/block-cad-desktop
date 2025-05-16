@@ -1,8 +1,8 @@
-# Block CAD Project - AI Development Guide----------我们交流项目用中文，但是软件里面的一切内容写英语
+# CAMblock Project - AI Development Guide----------我们交流项目用中文，但是软件里面的一切内容写英语
 
 ## Project Overview
 
-Block CAD is a web-based 3D modeling application that uses Blockly for visual programming interface and Three.js as the 3D rendering engine. This document is designed to help AI assistants understand the project architecture to assist with future development.
+CAMblock is a web-based 3D modeling application that uses Blockly for visual programming interface and Three.js as the 3D rendering engine. This document is designed to help AI assistants understand the project architecture to assist with future development.
 
 ## Tech Stack
 

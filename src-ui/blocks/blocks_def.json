@@ -217,9 +217,38 @@
         "arg": []
       }
     }
+  },
+ "Stacked Layers": {
+    "id": "stacked_layers",
+    "blocks": {
+      "generate_stacked_layers": {
+        "title": "Generate Stacked Layers",
+        "isStatementBlock": true,
+        "arg": [
+          {
+            "name": "material_thickness",
+            "type": "num",
+            "value": "3"
+          },
+          {
+            "name": "layer_count",
+            "type": "num",
+            "value": "10"
+          }
+        ]
+      },
+      "export_stacked_layers_svg": {
+        "title": "Export Stacked Layers SVG",
+        "arg": [
+          {
+            "name": "filename",
+            "type": "str",
+            "value": "stacked_layer"
+          }
+        ]
+      }
+}
   }
-
-
 
 
 }

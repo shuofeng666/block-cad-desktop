@@ -1,3 +1,5 @@
+// 在 index.ts 文件中添加层叠切片示例按钮
+
 import Split from "split.js";
 import { ControlPanel } from "./components/ControlPanel";
 import "./components/control-panel.css";
@@ -169,6 +171,66 @@ if (t1) {
         },
       };
       blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
+    } 
+    // 添加层叠切片示例
+    else if (cmd == "stacked_layers_example") {
+      const exampleCode = {
+        blocks: {
+          languageVersion: 0,
+          blocks: [
+            {
+              type: "upload_stl",
+              fields: {
+                FILE_UPLOAD: "default.stl",
+              },
+              next: {
+                block: {
+                  type: "rotate_model",
+                  fields: {
+                    ROTATE_X: "0",
+                    ROTATE_Y: "0",
+                    ROTATE_Z: "0",
+                  },
+                  next: {
+                    block: {
+                      type: "generate_stacked_layers",
+                      fields: {
+                        MATERIAL_THICKNESS: "3",
+                        LAYER_COUNT: "10",
+                      },
+                      inputs: {
+                        MODEL: {
+                          block: {
+                            type: "create_cube",
+                            fields: {
+                              SIZE: "50",
+                            },
+                          },
+                        },
+                      },
+                      next: {
+                        block: {
+                          type: "show_in_viewer",
+                          next: {
+                            block: {
+                              type: "export_stacked_layers_svg",
+                              fields: {
+                                FILENAME: "stacked_layer_example",
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      };
+      blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
+      statusBar.setStatus(`Loaded Stacked Layers example. Click "Render" to see the result.`, "info", 0);
     }
   });
 
@@ -214,6 +276,13 @@ if (t1) {
     "wire_mesh_example",
     `<span class="material-symbols-outlined">grid_3x3</span>`,
     "Wire Mesh Example with Transforms"
+  );
+  
+  // 添加层叠切片示例按钮
+  toolbar.addIcon(
+    "stacked_layers_example",
+    `<span class="material-symbols-outlined">layers</span>`,
+    "Stacked Layers Example"
   );
 }
 
