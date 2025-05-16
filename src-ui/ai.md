@@ -1,4 +1,5 @@
-# CAMblock Project - AI Development Guide----------我们交流项目用中文，但是软件里面的一切内容写英语
+# CAMblock Project - AI Development Guide
+----------我们交流项目用中文，但是软件里面的一切内容写英语
 
 ## Project Overview
 
@@ -64,6 +65,8 @@ Through interactive controls in the right panel, users can adjust the transforma
 
 - `src-ui/utils/hull.js`: Convex/concave hull algorithm implementation
 - `src-ui/utils/file.ts`: File operation utilities
+- `src-ui/utils/processIndices.ts`: Helper functions for geometry processing
+- `src-ui/utils/SVGExporter.ts`: SVG export utilities for stacked layers
 
 ## Main Data Structures
 
@@ -114,11 +117,17 @@ ControlConfig {
 // State tracking in ThreeJSCommandProcessor class
 private currentObjects: Map<string, THREE.Object3D> // Map of all model objects
 private currentSceneObject: THREE.Object3D | null   // Tracks the current object displayed in the scene
+private isStackedLayersMode: boolean = false;       // Flag indicating stacked layers mode
+private originalModelId: string | null = null;      // Tracks original model ID for stacked layers
+private stackedLayers: THREE.Object3D[] = [];       // Array of stacked layer objects
+private stackedShapes: any[] = [];                  // Array of shape data for SVG export
 
 // Transformation states stored in scope.context
 scope.context["_rotateModelValues"]    // Stores rotation angle values
 scope.context["_scaleModelValue"]      // Stores scale ratio value
 scope.context["_translateModelValues"] // Stores translation distance values
+scope.context["_stackedLayersMaterialThickness"] // Stores material thickness for stacked layers
+scope.context["_stackedLayersCount"]   // Stores layer count for stacked layers
 ```
 
 ## Execution Flow
@@ -170,6 +179,16 @@ Supports model rotation, scaling, and translation operations, with interactive c
 ### 5. Export Functionality
 
 Supports exporting wire mesh as CSV file format. Implemented through the `export_wire_csv` command.
+
+### 6. Stacked Layers Generation
+
+Generates stacked layers representation for laser cutting fabrication from 3D models. Implemented through the `generate_stacked_layers` command.
+
+- Slices 3D model into horizontal layers
+- Creates extruded representations of each slice with specified material thickness
+- Automatically regenerates when the original model is transformed
+- Original model is hidden by default, with an option to show/hide
+- Exports SVG files for use with laser cutters
 
 ## Interactive Control System Detailed Explanation
 
@@ -237,12 +256,70 @@ Key aspects of this implementation:
    - Range typically from -100 to +100
    - Directly modifies the `position` property
 
+4. **Stacked Layers Controls**:
+   - Material thickness slider (1mm to 5mm)
+   - Number of layers slider (3 to 50)
+   - Show/hide original model checkbox
+   - Regenerate layers button
+
+## Stacked Layers Generation System
+
+The stacked layers generation system is implemented to create physical manufacturing outputs from 3D models, particularly for laser-cut assembly models.
+
+### Key Components
+
+1. **Layer Generation Process**:
+   - Calculates model dimensions and determines layer spacing
+   - Creates horizontal cutting planes through the 3D model
+   - Finds intersection points between planes and model geometry
+   - Generates 2D shape outlines using hull algorithm
+   - Creates extruded 3D representations of each layer
+
+2. **Transformation Integration**:
+   - Automatically regenerates layers when original model is transformed
+   - Uses debouncing to prevent excessive regeneration during interactive control
+   - Maintains synchronization between original model and generated layers
+
+3. **User Interface Controls**:
+   - Material thickness controls to simulate different materials
+   - Layer count controls for adjusting fabrication complexity
+   - Visibility control for hiding/showing original model
+   - Regenerate button to manually trigger regeneration
+
+4. **SVG Export**:
+   - Converts layer outlines to SVG format
+   - Organizes files for direct use with laser cutting equipment
+   - Includes metadata about material thickness and layer ordering
+
+### Implementation Details
+
+1. **Intersection Finding**:
+   - Uses the `processIndices` helper function to find intersections between geometry and planes
+   - Handles both indexed and non-indexed geometry
+
+2. **Shape Generation**:
+   - Projects 3D intersection points to 2D
+   - Uses concave hull algorithm to generate clean outlines
+   - Creates THREE.js Shape objects for visualization and export
+
+3. **Layer Visualization**:
+   - Creates extruded mesh for each layer
+   - Adds outline edges for better visualization
+   - Uses consistent material appearance for fabrication preview
+
+4. **Transformation Synchronization**:
+   - Monitors rotation, scaling, and translation operations
+   - Implements debouncing to optimize performance during interactive control
+   - Correctly handles all transformation types (rotation, scaling, translation)
+
 ## Scene Object Management
 
-To support bidirectional interaction, the system uses two types of object tracking:
+To support bidirectional interaction, the system uses multiple types of object tracking:
 
 1. **Model Repository**: `currentObjects` Map stores all created objects
 2. **Active Display Object**: `currentSceneObject` tracks the object currently displayed in the scene
+3. **Stacked Layers**: `stackedLayers` array tracks generated layer objects
+4. **Original Model Reference**: `originalModelId` tracks the source model for stacked layers
 
 When users modify properties via controls, the system updates both types of objects, ensuring state consistency. This way, when users run block code again, states can seamlessly continue.
 
@@ -263,12 +340,17 @@ When users modify properties via controls, the system updates both types of obje
 
 4. **Performance Considerations**:
    - Rapid control value changes may cause frequent rendering
-   - Consider adding debounce mechanisms for complex models
+   - Use debouncing mechanisms for complex models
    - Large STL files may need optimized display mechanisms
 
 5. **Compatibility**:
    - Relies on WebGL and modern browser features
    - Control panel layout needs responsive design for mobile devices
+
+6. **Stacked Layers Management**:
+   - Always clean up previous layer objects before generating new ones
+   - Keep original model reference for regeneration after transformations
+   - Ensure proper resource disposal to prevent memory leaks
 
 ## Extension Development Guide
 
@@ -296,6 +378,15 @@ When users modify properties via controls, the system updates both types of obje
 4. Develop more intuitive 3D gizmo interactive controls
 5. Add ability to lock specific transformation axes
 
+### Extending Stacked Layers Functionality
+
+1. Add support for non-uniform layer spacing
+2. Implement layer-specific material assignment
+3. Add internal structure generation for stronger models
+4. Implement finger joint or interlocking features
+5. Add numbering and assembly guide generation
+6. Support different cutting strategies (kerf compensation, tabs, etc.)
+
 ## Development Debugging Tips
 
 1. Use browser console to view object properties and state changes
@@ -313,3 +404,6 @@ When users modify properties via controls, the system updates both types of obje
 5. Integrate VR/AR preview functionality
 6. Implement more advanced wire mesh controls (density, pattern, coloring)
 7. Add support for multi-object transformation and grouping
+8. Enhance stacked layers system with advanced fabrication features
+9. Add assembly instructions generation
+10. Implement cost estimation based on material usage
