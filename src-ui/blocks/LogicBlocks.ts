@@ -1,0 +1,258 @@
+// Logic blocks implementation for the CAMblock project
+// src-ui/blocks/LogicBlocks.ts
+
+import * as Blockly from "blockly";
+import { scope } from "../core/Scope";
+import { Command } from "../core/Scope";
+
+export function registerLogicBlocks(
+  codeGenerator: any,
+  addToolboxCategory: any
+) {
+  // Create a category for Logic blocks
+  const logicCategory = addToolboxCategory("Programming");
+  
+  // Define blocks
+  const blockDefinitions = {
+    "variable_declaration": {
+      category: logicCategory,
+      definition: {
+        init: function () {
+          this.appendDummyInput()
+            .appendField("Set Variable")
+            .appendField(new Blockly.FieldTextInput("varName"), "VAR_NAME")
+            .appendField("to");
+          this.appendValueInput("VALUE")
+            .setCheck(null);
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(logicCategory.colour);
+          this.setTooltip("Declare a variable with a specified value");
+        },
+      },
+      generator: function (block: any) {
+        const varName = block.getFieldValue("VAR_NAME");
+        const value = codeGenerator.valueToCode(block, "VALUE", 0) || "0";
+        
+        const cmd = new Command("variable_declaration", { varName, value }, [], {});
+        scope.push(cmd);
+        return "";
+      },
+    },
+    
+    "for_loop": {
+      category: logicCategory,
+      definition: {
+        init: function () {
+          this.appendDummyInput()
+            .appendField("For")
+            .appendField(new Blockly.FieldTextInput("i"), "VAR_NAME")
+            .appendField("from")
+            .appendField(new Blockly.FieldNumber(0), "FROM")
+            .appendField("to")
+            .appendField(new Blockly.FieldNumber(10), "TO")
+            .appendField("step")
+            .appendField(new Blockly.FieldNumber(1), "STEP");
+          this.appendStatementInput("DO")
+            .setCheck(null)
+            .appendField("Do");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(logicCategory.colour);
+          this.setTooltip("Execute a block of code for a specified number of iterations");
+        },
+      },
+      generator: function (block: any) {
+        const varName = block.getFieldValue("VAR_NAME");
+        const from = parseFloat(block.getFieldValue("FROM"));
+        const to = parseFloat(block.getFieldValue("TO"));
+        const step = parseFloat(block.getFieldValue("STEP"));
+        
+        // Handle the statements inside the loop
+        scope.newScope();
+        codeGenerator.statementToCode(block, "DO");
+        const children = scope.scopeItem.items;
+        scope.popScope();
+        
+        const cmd = new Command("for_loop", { varName, from, to, step }, children, {});
+        scope.push(cmd);
+        return "";
+      },
+    },
+    
+    "if_statement": {
+      category: logicCategory,
+      definition: {
+        init: function () {
+          this.appendValueInput("CONDITION")
+            .setCheck("Boolean")
+            .appendField("If");
+          this.appendStatementInput("DO")
+            .setCheck(null)
+            .appendField("Then");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(logicCategory.colour);
+          this.setTooltip("Execute a block of code if the condition is true");
+        },
+      },
+      generator: function (block: any) {
+        const condition = codeGenerator.valueToCode(block, "CONDITION", 0) || "false";
+        
+        // Handle the statements inside the if block
+        scope.newScope();
+        codeGenerator.statementToCode(block, "DO");
+        const children = scope.scopeItem.items;
+        scope.popScope();
+        
+        const cmd = new Command("if_statement", { condition }, children, {});
+        scope.push(cmd);
+        return "";
+      },
+    },
+    
+    "number": {
+      category: logicCategory,
+      definition: {
+        init: function () {
+          this.appendDummyInput()
+            .appendField(new Blockly.FieldNumber(0), "NUM");
+          this.setOutput(true, "Number");
+          this.setColour(logicCategory.colour);
+          this.setTooltip("A number value");
+        },
+      },
+      generator: function (block: any) {
+        const number = parseFloat(block.getFieldValue("NUM"));
+        return [number.toString(), 0];
+      },
+    },
+    
+    "math_operation": {
+      category: logicCategory,
+      definition: {
+        init: function () {
+          this.appendValueInput("A")
+            .setCheck("Number");
+          this.appendDummyInput()
+            .appendField(new Blockly.FieldDropdown([
+              ["+", "ADD"],
+              ["-", "SUBTRACT"],
+              ["×", "MULTIPLY"],
+              ["÷", "DIVIDE"]
+            ]), "OP");
+          this.appendValueInput("B")
+            .setCheck("Number");
+          this.setOutput(true, "Number");
+          this.setColour(logicCategory.colour);
+          this.setTooltip("Perform a mathematical operation on two numbers");
+        },
+      },
+      generator: function (block: any) {
+        const a = codeGenerator.valueToCode(block, "A", 0) || "0";
+        const b = codeGenerator.valueToCode(block, "B", 0) || "0";
+        const op = block.getFieldValue("OP");
+        
+        let code = "";
+        switch (op) {
+          case "ADD":
+            code = `(${a} + ${b})`;
+            break;
+          case "SUBTRACT":
+            code = `(${a} - ${b})`;
+            break;
+          case "MULTIPLY":
+            code = `(${a} * ${b})`;
+            break;
+          case "DIVIDE":
+            code = `(${a} / ${b})`;
+            break;
+        }
+        
+        return [code, 0];
+      },
+    },
+    
+    "comparison": {
+      category: logicCategory,
+      definition: {
+        init: function () {
+          this.appendValueInput("A")
+            .setCheck("Number");
+          this.appendDummyInput()
+            .appendField(new Blockly.FieldDropdown([
+              ["=", "EQ"],
+              ["≠", "NEQ"],
+              [">", "GT"],
+              ["<", "LT"],
+              ["≥", "GTE"],
+              ["≤", "LTE"]
+            ]), "OP");
+          this.appendValueInput("B")
+            .setCheck("Number");
+          this.setOutput(true, "Boolean");
+          this.setColour(logicCategory.colour);
+          this.setTooltip("Compare two numbers and return a boolean result");
+        },
+      },
+      generator: function (block: any) {
+        const a = codeGenerator.valueToCode(block, "A", 0) || "0";
+        const b = codeGenerator.valueToCode(block, "B", 0) || "0";
+        const op = block.getFieldValue("OP");
+        
+        let code = "";
+        switch (op) {
+          case "EQ":
+            code = `(${a} == ${b})`;
+            break;
+          case "NEQ":
+            code = `(${a} != ${b})`;
+            break;
+          case "GT":
+            code = `(${a} > ${b})`;
+            break;
+          case "LT":
+            code = `(${a} < ${b})`;
+            break;
+          case "GTE":
+            code = `(${a} >= ${b})`;
+            break;
+          case "LTE":
+            code = `(${a} <= ${b})`;
+            break;
+        }
+        
+        return [code, 0];
+      },
+    },
+    
+    "variable_get": {
+      category: logicCategory,
+      definition: {
+        init: function () {
+          this.appendDummyInput()
+            .appendField("Get Variable")
+            .appendField(new Blockly.FieldTextInput("varName"), "VAR_NAME");
+          this.setOutput(true, null);
+          this.setColour(logicCategory.colour);
+          this.setTooltip("Get the value of a variable");
+        },
+      },
+      generator: function (block: any) {
+        const varName = block.getFieldValue("VAR_NAME");
+        return [varName, 0];
+      },
+    },
+  };
+  
+  // Register all blocks
+  Object.entries(blockDefinitions).forEach(
+    ([blockId, { category, definition, generator }]) => {
+      Blockly.Blocks[blockId] = definition;
+      codeGenerator[blockId] = generator;
+
+      // Add to toolbox
+      category.contents.push({ kind: "block", type: blockId });
+    }
+  );
+}

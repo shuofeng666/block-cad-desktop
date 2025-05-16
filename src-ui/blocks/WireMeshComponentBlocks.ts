@@ -1,4 +1,4 @@
-// 1. 创建新文件: src-ui/blocks/WireMeshComponentBlocks.ts
+// src-ui/blocks/WireMeshComponentBlocks.ts
 
 import * as Blockly from "blockly";
 import { scope } from "../core/Scope";
@@ -126,6 +126,31 @@ export function registerWireMeshComponentBlocks(
       },
       generator: function (block: any) {
         const cmd = new Command("collect_wire_mesh", {}, [], {});
+        scope.push(cmd);
+        return "";
+      },
+    },
+    
+    // Add this new block for CSV export
+    "export_component_wire_csv": {
+      category: wireMeshComponentsCategory,
+      definition: {
+        init: function () {
+          this.appendDummyInput()
+            .appendField("Export Wire Mesh CSV");
+          this.appendDummyInput()
+            .appendField("filename:")
+            .appendField(new Blockly.FieldTextInput("component_wire_mesh"), "FILENAME");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(wireMeshComponentsCategory.colour);
+          this.setTooltip("Export the wire mesh data to CSV file");
+        },
+      },
+      generator: function (block: any) {
+        const filename = block.getFieldValue("FILENAME");
+        
+        const cmd = new Command("export_wire_csv", { filename }, [], {});
         scope.push(cmd);
         return "";
       },

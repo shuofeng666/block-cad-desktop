@@ -41,114 +41,211 @@ export class ThreeJSCommandProcessor {
     );
   }
 
-  async processCommand(cmd: any): Promise<any> {
+private async processCommand(cmd: any): Promise<any> {
+  console.log(
+    "[ThreeJSCommandProcessor] Processing command:",
+    cmd.id,
+    cmd.args
+  );
+
+  try {
+    let result = null;
+
+    switch (cmd.id) {
+      // Wire Mesh Components commands
+      case "initialize_wire_mesh":
+        this.initializeWireMesh();
+        result = null;
+        break;
+
+      case "add_horizontal_wire":
+        this.addHorizontalWire(
+          cmd.args.position,
+          cmd.args.thickness,
+          cmd.args.color
+        );
+        result = null;
+        break;
+
+      case "add_vertical_wire":
+        this.addVerticalWire(
+          cmd.args.position,
+          cmd.args.thickness,
+          cmd.args.color
+        );
+        result = null;
+        break;
+
+      case "convert_to_tubes":
+        this.convertToTubes(cmd.args.thickness);
+        result = null;
+        break;
+
+      case "collect_wire_mesh":
+        result = this.collectWireMesh();
+        break;
+
+      // Programming Logic commands
+      case "variable_declaration":
+        result = this.handleVariableDeclaration(cmd);
+        break;
+
+      case "for_loop":
+        result = await this.handleForLoop(cmd);
+        break;
+
+      case "if_statement":
+        result = await this.handleIfStatement(cmd);
+        break;
+
+      // Existing commands
+      case "upload_stl":
+        result = await this.uploadSTL(cmd.args.file);
+        break;
+
+      case "create_cube":
+        result = this.createCube(cmd.args.size);
+        break;
+
+      case "generate_wire_mesh":
+        result = await this.generateWireMesh(cmd);
+        break;
+
+      case "show_in_viewer":
+        result = await this.showInViewer(cmd);
+        break;
+
+      case "clear_scene":
+        result = this.clearScene();
+        break;
+
+      case "export_wire_csv":
+        result = await this.exportWireCSV(cmd);
+        break;
+
+      case "rotate_model":
+        result = this.rotateModel(cmd);
+        break;
+
+      case "scale_model":
+        result = this.scaleModel(cmd);
+        break;
+
+      case "translate_model":
+        result = this.translateModel(cmd);
+        break;
+
+      case "generate_stacked_layers":
+        result = await this.generateStackedLayers(cmd);
+        break;
+
+      case "export_stacked_layers_svg":
+        result = this.exportStackedLayersSVG(cmd);
+        break;
+
+      default:
+        console.warn("[ThreeJSCommandProcessor] Unknown command:", cmd.id);
+        return null;
+    }
+
     console.log(
-      "[ThreeJSCommandProcessor] Processing command:",
-      cmd.id,
-      cmd.args
+      `[ThreeJSCommandProcessor] Command ${cmd.id} completed with result:`,
+      result
     );
+    return result;
+  } catch (error) {
+    console.error(
+      "[ThreeJSCommandProcessor] Error processing command:",
+      cmd.id,
+      error
+    );
+    if (error instanceof Error) {
+      console.error("[ThreeJSCommandProcessor] Error stack:", error.stack);
+    }
+    return null;
+  }
+}
 
-    try {
-      let result = null;
+// Logic command handlers
+private handleVariableDeclaration(cmd: any): null {
+  const { varName, value } = cmd.args;
+  
+  // Try to parse the value as a number if possible
+  let parsedValue;
+  try {
+    parsedValue = JSON.parse(value);
+  } catch (e) {
+    // If parsing fails, use the original string value
+    parsedValue = value;
+  }
+  
+  // Store the variable in the scope context
+  scope.setVar(varName, parsedValue);
+  console.log(`[handleVariableDeclaration] Set variable ${varName} = ${parsedValue}`);
+  
+  return null;
+}
 
-      switch (cmd.id) {
-        case "initialize_wire_mesh":
-          this.initializeWireMesh();
-          result = null;
-          break;
-
-        case "add_horizontal_wire":
-          this.addHorizontalWire(
-            cmd.args.position,
-            cmd.args.thickness,
-            cmd.args.color
-          );
-          result = null;
-          break;
-
-        case "add_vertical_wire":
-          this.addVerticalWire(
-            cmd.args.position,
-            cmd.args.thickness,
-            cmd.args.color
-          );
-          result = null;
-          break;
-
-        case "convert_to_tubes":
-          this.convertToTubes(cmd.args.thickness);
-          result = null;
-          break;
-
-        case "collect_wire_mesh":
-          result = this.collectWireMesh();
-        case "upload_stl":
-          result = await this.uploadSTL(cmd.args.file);
-          break;
-
-        case "create_cube":
-          result = this.createCube(cmd.args.size);
-          break;
-
-        case "generate_wire_mesh":
-          result = await this.generateWireMesh(cmd);
-          break;
-
-        case "show_in_viewer":
-          result = await this.showInViewer(cmd);
-          break;
-
-        case "clear_scene":
-          result = this.clearScene();
-          break;
-
-        case "export_wire_csv":
-          result = await this.exportWireCSV(cmd);
-          break;
-
-        case "rotate_model":
-          result = this.rotateModel(cmd);
-          break;
-
-        case "scale_model":
-          result = this.scaleModel(cmd);
-          break;
-
-        case "translate_model":
-          result = this.translateModel(cmd);
-          break;
-
-        // 新增层叠切片命令
-        case "generate_stacked_layers":
-          result = await this.generateStackedLayers(cmd);
-          break;
-
-        case "export_stacked_layers_svg":
-          result = this.exportStackedLayersSVG(cmd);
-          break;
-
-        default:
-          console.warn("[ThreeJSCommandProcessor] Unknown command:", cmd.id);
-          return null;
+private async handleForLoop(cmd: any): Promise<any> {
+  const { varName, from, to, step } = cmd.args;
+  let result = null;
+  
+  console.log(`[handleForLoop] Starting loop: ${varName} from ${from} to ${to} step ${step}`);
+  
+  // Execute the loop
+  for (let i = from; i < to; i += step) {
+    // Set the loop variable for each iteration
+    scope.setVar(varName, i);
+    console.log(`[handleForLoop] Iteration ${varName} = ${i}`);
+    
+    // Execute all child commands
+    if (cmd.children && cmd.children.length > 0) {
+      for (const child of cmd.children) {
+        const childResult = await this.processCommand(child);
+        if (childResult !== null) {
+          result = childResult;
+        }
       }
-
-      console.log(
-        `[ThreeJSCommandProcessor] Command ${cmd.id} completed with result:`,
-        result
-      );
-      return result;
-    } catch (error) {
-      console.error(
-        "[ThreeJSCommandProcessor] Error processing command:",
-        cmd.id,
-        error
-      );
-      if (error instanceof Error) {
-        console.error("[ThreeJSCommandProcessor] Error stack:", error.stack);
-      }
-      return null;
     }
   }
+  
+  return result;
+}
+
+private async handleIfStatement(cmd: any): Promise<any> {
+  const { condition } = cmd.args;
+  
+  // Evaluate the condition
+  let conditionMet = false;
+  try {
+    // This is a simplified approach - in a real environment,
+    // you would need a more robust way to evaluate expressions
+    conditionMet = eval(condition);
+  } catch (e) {
+    console.error(`[handleIfStatement] Error evaluating condition: ${condition}`, e);
+    return null;
+  }
+  
+  console.log(`[handleIfStatement] Condition: ${condition}, Result: ${conditionMet}`);
+  
+  if (conditionMet) {
+    let result = null;
+    
+    // Execute all child commands
+    if (cmd.children && cmd.children.length > 0) {
+      for (const child of cmd.children) {
+        const childResult = await this.processCommand(child);
+        if (childResult !== null) {
+          result = childResult;
+        }
+      }
+    }
+    
+    return result;
+  }
+  
+  return null;
+}
 
   /**
    * 生成层叠切片

@@ -1,5 +1,4 @@
-// 在 index.ts 文件中添加层叠切片示例按钮
-
+// src-ui/index.ts
 import Split from "split.js";
 import { ControlPanel } from "./components/ControlPanel";
 import "./components/control-panel.css";
@@ -9,6 +8,7 @@ import "./styles/app.css";
 import { BlocklyEditor } from "./core/BlockEditor";
 import LightTheme from "./styles/theme-light";
 import { registerWireMeshComponentBlocks } from "./blocks/WireMeshComponentBlocks";
+import { registerLogicBlocks } from "./blocks/LogicBlocks";
 import {
   getBlocks,
   getToolbox,
@@ -64,7 +64,7 @@ if (t1) {
         try {
           // 首先清空场景
           glViewer.clearScene();
-           threeJSProcessor.clearState();
+          threeJSProcessor.clearState();
           scope.reset();
           blockEditor.generateCode();
 
@@ -173,54 +173,56 @@ if (t1) {
       };
       blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
     } else if (cmd == "component_wire_mesh_example") {
-  const exampleCode = {
-    blocks: {
-      languageVersion: 0,
-      blocks: [
-        {
-          type: "upload_stl",
-          fields: {
-            FILE_UPLOAD: "default.stl",
-          },
-          next: {
-            block: {
-              type: "initialize_wire_mesh",
+      const exampleCode = {
+        blocks: {
+          languageVersion: 0,
+          blocks: [
+            {
+              type: "upload_stl",
+              fields: {
+                FILE_UPLOAD: "default.stl",
+              },
               next: {
                 block: {
-                  type: "add_horizontal_wire",
-                  fields: {
-                    POSITION: "10",
-                    THICKNESS: "0.5",
-                    COLOR: "#ff0000",
-                  },
+                  type: "initialize_wire_mesh",
                   next: {
                     block: {
                       type: "add_horizontal_wire",
                       fields: {
-                        POSITION: "20",
+                        POSITION: "10",
                         THICKNESS: "0.5",
                         COLOR: "#ff0000",
                       },
                       next: {
                         block: {
-                          type: "add_vertical_wire",
+                          type: "add_horizontal_wire",
                           fields: {
-                            POSITION: "15",
+                            POSITION: "20",
                             THICKNESS: "0.5",
-                            COLOR: "#00ff00",
+                            COLOR: "#ff0000",
                           },
                           next: {
                             block: {
-                              type: "convert_to_tubes",
+                              type: "add_vertical_wire",
                               fields: {
-                                THICKNESS: "0.8",
+                                POSITION: "15",
+                                THICKNESS: "0.5",
+                                COLOR: "#00ff00",
                               },
                               next: {
                                 block: {
-                                  type: "collect_wire_mesh",
+                                  type: "convert_to_tubes",
+                                  fields: {
+                                    THICKNESS: "0.8",
+                                  },
                                   next: {
                                     block: {
-                                      type: "show_in_viewer",
+                                      type: "collect_wire_mesh",
+                                      next: {
+                                        block: {
+                                          type: "show_in_viewer",
+                                        },
+                                      },
                                     },
                                   },
                                 },
@@ -234,13 +236,11 @@ if (t1) {
                 },
               },
             },
-          },
+          ],
         },
-      ],
-    },
-  };
-  blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
-}
+      };
+      blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
+    }
     // 添加层叠切片示例
     else if (cmd == "stacked_layers_example") {
       const exampleCode = {
@@ -339,10 +339,16 @@ if (t1) {
   );
 
   toolbar.addIcon(
-  "component_wire_mesh_example",
-  `<span class="material-symbols-outlined">grid_4x4</span>`,
-  "Component Wire Mesh Example"
-);
+    "component_wire_mesh_example",
+    `<span class="material-symbols-outlined">grid_4x4</span>`,
+    "Component Wire Mesh Example"
+  );
+  
+  toolbar.addIcon(
+    "programmatic_wire_mesh_example",
+    `<span class="material-symbols-outlined">code</span>`,
+    "Programmatic Wire Mesh Example"
+  );
   
   // 添加层叠切片示例按钮
   toolbar.addIcon(
@@ -379,9 +385,11 @@ if (controlPanelElement) {
   }
 }
 
-// 注册 Three.js 块（在创建 GLViewer 之后）
+// 注册所有块定义 - 先注册到 Blockly
 registerThreeJSBlocks(getCodeGenerator(), addToolboxCatogery);
 registerWireMeshComponentBlocks(getCodeGenerator(), addToolboxCatogery);
+registerLogicBlocks(getCodeGenerator(), addToolboxCatogery);
+
 // 创建 Three.js 处理器（必须在 GLViewer 之后创建）
 const threeJSProcessor = new ThreeJSCommandProcessor(glViewer, controlPanel);
 
