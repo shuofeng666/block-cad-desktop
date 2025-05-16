@@ -14,6 +14,9 @@ export class ThreeJSCommandProcessor {
   private glViewer: any;
   private controlPanel?: ControlPanel;
   private currentSceneObject: THREE.Object3D | null = null;
+  private isStackedLayersMode: boolean = false;
+private originalModelId: string | null = null;
+private regenerateDebounceTimer: any = null;
   
   // 添加层叠切片相关状态
   private stackedLayers: THREE.Object3D[] = [];
@@ -115,162 +118,220 @@ export class ThreeJSCommandProcessor {
    * 生成层叠切片
    * @param cmd 命令参数
    */
-  private async generateStackedLayers(cmd: any): Promise<string> {
-    console.log("[generateStackedLayers] Starting with args:", cmd.args);
-    
-    // 获取参数
-    const materialThickness = cmd.args.materialThickness || 3;
-    const layerCount = cmd.args.layerCount || 10;
-    
-    // 处理子命令获取模型
-    let objectId = scope.context["_currentObjectId"];
-    if (cmd.children && cmd.children.length > 0) {
-      for (const child of cmd.children) {
-        const result = await this.processCommand(child);
-        if (result) objectId = result;
-      }
+private async generateStackedLayers(cmd: any): Promise<string> {
+  // 获取参数
+  const materialThickness = cmd.args.materialThickness || 3;
+  const layerCount = cmd.args.layerCount || 10;
+  
+  // 处理子命令获取模型
+  let objectId = scope.context["_currentObjectId"];
+  if (cmd.children && cmd.children.length > 0) {
+    for (const child of cmd.children) {
+      const result = await this.processCommand(child);
+      if (result) objectId = result;
     }
-    
-    if (!objectId) {
-      console.error("[generateStackedLayers] No object ID found");
-      return null;
-    }
-    
-    const obj = this.currentObjects.get(objectId);
-    if (!obj || !(obj instanceof THREE.Mesh)) {
-      console.error("[generateStackedLayers] No valid mesh found");
-      return null;
-    }
-    
-    // 计算边界框和尺寸
-    const boundingBox = new THREE.Box3().setFromObject(obj);
-    const size = boundingBox.getSize(new THREE.Vector3());
-    
-    // 存储模型尺寸
-    this.modelDimensions = {
-      width: size.x,
-      height: size.y,
-      depth: size.z
-    };
-    
-    console.log("[generateStackedLayers] Model dimensions:", this.modelDimensions);
-    
-    // 清除之前的层
-    this.stackedLayers.forEach(layer => {
-      this.scene.remove(layer);
-      if (layer instanceof THREE.Mesh) {
-        layer.geometry.dispose();
-        if (Array.isArray(layer.material)) {
-          layer.material.forEach(m => m.dispose());
-        } else {
-          layer.material.dispose();
-        }
-      }
-    });
-    
-    this.stackedLayers = [];
-    this.stackedShapes = [];
-    
-    // 计算层间距
-    const layerSpacing = size.y / layerCount;
-    
-    // 生成每一层
-    for (let i = 0; i < layerCount; i++) {
-      // 计算当前层的Y位置
-      const layerY = boundingBox.min.y + i * layerSpacing;
-      
-      // 创建平面
-      const mathPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -layerY);
-      
-      // 获取交点
-      const intersectionPoints: THREE.Vector3[] = [];
-      const vertices = obj.geometry.attributes.position;
-      const indices = obj.geometry.index;
-      
-      processIndices(indices, vertices, obj, mathPlane, intersectionPoints);
-      
-      // 处理交点
-      if (intersectionPoints.length > 3) {
-        // 转换为2D点
-        const points2D = intersectionPoints.map(p => [p.x, p.z]);
-        
-        // 使用凸包算法计算轮廓
-        const hullPoints = hull(points2D, 30);
-        
-        if (hullPoints && hullPoints.length > 2) {
-          // 创建THREE.js形状
-          const shape = new THREE.Shape();
-          
-          hullPoints.forEach((point, idx) => {
-            if (idx === 0) {
-              shape.moveTo(point[0], point[1]);
-            } else {
-              shape.lineTo(point[0], point[1]);
-            }
-          });
-          shape.closePath();
-          
-          // 保存形状数据用于SVG导出
-          this.stackedShapes.push({
-            shape,
-            position: new THREE.Vector3(0, layerY, 0),
-            rotation: new THREE.Euler(Math.PI / 2, 0, 0),
-            points: hullPoints
-          });
-          
-          // 创建挤出设置
-          const extrudeSettings = {
-            depth: materialThickness,
-            bevelEnabled: false,
-            curveSegments: 8,
-            steps: 1,
-          };
-          
-          // 创建几何体
-          const extrudeGeometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-          
-          // 创建材质
-          const material = new THREE.MeshStandardMaterial({
-            color: 0xd4b795,
-            roughness: 0.7,
-            metalness: 0.05,
-            side: THREE.DoubleSide,
-          });
-          
-          // 创建层网格
-          const layer = new THREE.Mesh(extrudeGeometry, material);
-          layer.position.set(0, layerY - materialThickness / 2, 0);
-          layer.rotation.x = Math.PI / 2;
-          layer.castShadow = true;
-          layer.receiveShadow = true;
-          
-          // 添加轮廓线
-          const outlineGeometry = new THREE.EdgesGeometry(layer.geometry);
-          const outline = new THREE.LineSegments(
-            outlineGeometry,
-            new THREE.LineBasicMaterial({ color: 0x000000 })
-          );
-          layer.add(outline);
-          
-          // 添加到场景和层数组
-          this.scene.add(layer);
-          this.stackedLayers.push(layer);
-        }
-      }
-    }
-    
-    // 保存层叠模型ID和控制参数
-    const stackedLayersId = `stacked_layers_${Date.now()}`;
-    scope.setVar("_stackedLayersId", stackedLayersId);
-    scope.setVar("_stackedLayersMaterialThickness", materialThickness);
-    scope.setVar("_stackedLayersCount", layerCount);
-    
-    // 显示控制面板
-    this.showStackedLayersControls(materialThickness, layerCount);
-    
-    return stackedLayersId;
   }
+  
+  if (!objectId) {
+    console.error("[generateStackedLayers] No object ID found");
+    return null;
+  }
+  
+  // 记录原始模型ID，用于后续变换后重新生成层叠切片
+  this.originalModelId = objectId;
+  
+  // 启用层叠模式标志
+  this.isStackedLayersMode = true;
+  
+  // 先清除之前的层
+  this.removeStackedLayers();
+  
+  // 存储材料厚度和层数参数，用于后续变换后重新生成
+  scope.setVar("_stackedLayersMaterialThickness", materialThickness);
+  scope.setVar("_stackedLayersCount", layerCount);
+  
+  // 生成层叠切片
+  const stackedLayersId = await this.generateStackedLayersFromObject(
+    objectId, 
+    materialThickness, 
+    layerCount
+  );
+  
+  // 显示控制面板
+  this.showStackedLayersControls(materialThickness, layerCount);
+  
+  return stackedLayersId;
+}
 
+private removeStackedLayers(): void {
+  // 从场景中移除层
+  this.stackedLayers.forEach(layer => {
+    this.scene.remove(layer);
+    if (layer instanceof THREE.Mesh) {
+      layer.geometry.dispose();
+      if (Array.isArray(layer.material)) {
+        layer.material.forEach(m => m.dispose());
+      } else {
+        layer.material.dispose();
+      }
+    }
+  });
+  
+  this.stackedLayers = [];
+}
+
+/**
+ * 从对象ID生成层叠切片
+ */
+private async generateStackedLayersFromObject(
+  objectId: string,
+  materialThickness: number,
+  layerCount: number
+): Promise<string> {
+  console.log("[generateStackedLayersFromObject] Starting with object ID:", objectId);
+  
+  const obj = this.currentObjects.get(objectId);
+  if (!obj || !(obj instanceof THREE.Mesh)) {
+    console.error("[generateStackedLayersFromObject] No valid mesh found");
+    return null;
+  }
+  
+  // 计算边界框和尺寸
+  const boundingBox = new THREE.Box3().setFromObject(obj);
+  const size = boundingBox.getSize(new THREE.Vector3());
+  
+  // 存储模型尺寸
+  this.modelDimensions = {
+    width: size.x,
+    height: size.y,
+    depth: size.z
+  };
+  
+  console.log("[generateStackedLayersFromObject] Model dimensions:", this.modelDimensions);
+  
+  // 清除之前的层数据
+  this.stackedShapes = [];
+  
+  // 计算层间距
+  const layerSpacing = size.y / layerCount;
+  
+  // 生成每一层
+  for (let i = 0; i < layerCount; i++) {
+    // 计算当前层的Y位置
+    const layerY = boundingBox.min.y + i * layerSpacing;
+    
+    // 创建平面
+    const mathPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -layerY);
+    
+    // 获取交点
+    const intersectionPoints: THREE.Vector3[] = [];
+    const vertices = obj.geometry.attributes.position;
+    const indices = obj.geometry.index;
+    
+    processIndices(indices, vertices, obj, mathPlane, intersectionPoints);
+    
+    // 处理交点
+    if (intersectionPoints.length > 3) {
+      // 转换为2D点
+      const points2D = intersectionPoints.map(p => [p.x, p.z]);
+      
+      // 使用凸包算法计算轮廓
+      const hullPoints = hull(points2D, 30);
+      
+      if (hullPoints && hullPoints.length > 2) {
+        // 创建THREE.js形状
+        const shape = new THREE.Shape();
+        
+        hullPoints.forEach((point, idx) => {
+          if (idx === 0) {
+            shape.moveTo(point[0], point[1]);
+          } else {
+            shape.lineTo(point[0], point[1]);
+          }
+        });
+        shape.closePath();
+        
+        // 保存形状数据用于SVG导出
+        this.stackedShapes.push({
+          shape,
+          position: new THREE.Vector3(0, layerY, 0),
+          rotation: new THREE.Euler(Math.PI / 2, 0, 0),
+          points: hullPoints
+        });
+        
+        // 创建挤出设置
+        const extrudeSettings = {
+          depth: materialThickness,
+          bevelEnabled: false,
+          curveSegments: 8,
+          steps: 1,
+        };
+        
+        // 创建几何体
+        const extrudeGeometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        
+        // 创建材质
+        const material = new THREE.MeshStandardMaterial({
+          color: 0xd4b795,
+          roughness: 0.7,
+          metalness: 0.05,
+          side: THREE.DoubleSide,
+        });
+        
+        // 创建层网格
+        const layer = new THREE.Mesh(extrudeGeometry, material);
+        layer.position.set(0, layerY - materialThickness / 2, 0);
+        layer.rotation.x = Math.PI / 2;
+        layer.castShadow = true;
+        layer.receiveShadow = true;
+        
+        // 添加轮廓线
+        const outlineGeometry = new THREE.EdgesGeometry(layer.geometry);
+        const outline = new THREE.LineSegments(
+          outlineGeometry,
+          new THREE.LineBasicMaterial({ color: 0x000000 })
+        );
+        layer.add(outline);
+        
+        // 添加到场景和层数组
+        this.scene.add(layer);
+        this.stackedLayers.push(layer);
+      }
+    }
+  }
+  
+  // 保存层叠模型ID和控制参数
+  const stackedLayersId = `stacked_layers_${Date.now()}`;
+  
+  return stackedLayersId;
+}
+private async regenerateStackedLayers(): Promise<void> {
+  // 获取材料厚度和层数
+  const materialThickness = scope.context["_stackedLayersMaterialThickness"] || 3;
+  const layerCount = scope.context["_stackedLayersCount"] || 10;
+  
+  // 清除当前层
+  this.removeStackedLayers();
+  
+  // 生成新层
+  await this.generateStackedLayersFromObject(
+    this.originalModelId,
+    materialThickness,
+    layerCount
+  );
+}
+
+private debounceRegenerateStackedLayers(): void {
+  // 清除上一个定时器
+  if (this.regenerateDebounceTimer) {
+    clearTimeout(this.regenerateDebounceTimer);
+  }
+  
+  // 设置新的定时器，500毫秒后执行重新生成
+  this.regenerateDebounceTimer = setTimeout(() => {
+    this.regenerateStackedLayers();
+  }, 500);
+}
   /**
    * 导出层叠切片SVG文件
    * @param cmd 命令参数
@@ -307,46 +368,94 @@ export class ThreeJSCommandProcessor {
    * @param materialThickness 材料厚度
    * @param layerCount 层数
    */
-  private showStackedLayersControls(materialThickness: number, layerCount: number): void {
-    if (!this.controlPanel) {
-      console.warn("[showStackedLayersControls] Control panel not available");
-      return;
-    }
-    
-    // 清除当前控制面板
-    this.controlPanel.clear();
-    
-    // 设置新的控制面板
-    this.controlPanel.setCommand("stacked_layers_controls", "Stacked Layers Controls");
-    
-    // 添加材料厚度控制
-    this.controlPanel.addControl({
-      id: "materialThickness",
-      type: "slider",
-      label: "Material Thickness (mm)",
-      min: 1,
-      max: 5,
-      step: 0.5,
-      value: materialThickness,
-      onChange: (value) => this.onMaterialThicknessChange(value as number)
-    });
-    
-    // 添加层数控制
-    this.controlPanel.addControl({
-      id: "layerCount",
-      type: "slider",
-      label: "Number of Layers",
-      min: 3,
-      max: 50,
-      step: 1,
-      value: layerCount,
-      onChange: (value) => this.onLayerCountChange(value as number)
-    });
-    
-    // 添加导出按钮 (可选功能)
-    // 注意：控制面板可能不支持按钮，如果需要可以自己在HTML中添加
+private showStackedLayersControls(materialThickness: number, layerCount: number): void {
+  if (!this.controlPanel) {
+    console.warn("[showStackedLayersControls] Control panel not available");
+    return;
   }
-
+  
+  // 清除当前控制面板
+  this.controlPanel.clear();
+  
+  // 设置新的控制面板
+  this.controlPanel.setCommand("stacked_layers_controls", "Stacked Layers Controls");
+  
+  // 添加材料厚度控制
+  this.controlPanel.addControl({
+    id: "materialThickness",
+    type: "slider",
+    label: "Material Thickness (mm)",
+    min: 1,
+    max: 5,
+    step: 0.5,
+    value: materialThickness,
+    onChange: (value) => this.onMaterialThicknessChange(value as number)
+  });
+  
+  // 添加层数控制
+  this.controlPanel.addControl({
+    id: "layerCount",
+    type: "slider",
+    label: "Number of Layers",
+    min: 3,
+    max: 50,
+    step: 1,
+    value: layerCount,
+    onChange: (value) => this.onLayerCountChange(value as number)
+  });
+  
+  // 添加显示/隐藏原始模型选项
+  this.controlPanel.addControl({
+    id: "showOriginalModel",
+    type: "checkbox",
+    label: "Show Original Model",
+    value: false,  // 默认不显示原始模型
+    onChange: (value) => this.onShowOriginalModelChange(value as boolean)
+  });
+  
+  // 添加重新生成按钮控件
+  this.controlPanel.addControl({
+    id: "regenerate",
+    type: "slider",  // 由于没有按钮类型，使用滑块来模拟
+    label: "Regenerate Layers",
+    min: 0,
+    max: 1,
+    step: 1,
+    value: 0,
+    onChange: (value) => {
+      if (value === 1) {
+        this.regenerateStackedLayers();
+        // 重置滑块
+        setTimeout(() => {
+          this.controlPanel.updateControl("regenerate", 0);
+        }, 500);
+      }
+    }
+  });
+}
+/**
+ * 处理显示/隐藏原始模型选项
+ * @param show 是否显示原始模型
+ */
+private onShowOriginalModelChange(show: boolean): void {
+  console.log(`[onShowOriginalModelChange] Show original model: ${show}`);
+  
+  if (!this.originalModelId) return;
+  
+  const originalObject = this.currentObjects.get(this.originalModelId);
+  if (!originalObject) return;
+  
+  // 在场景中找到原始模型并设置可见性
+  if (this.currentSceneObject) {
+    this.currentSceneObject.visible = show;
+    
+    if (this.currentSceneObject instanceof THREE.Group) {
+      this.currentSceneObject.traverse((child) => {
+        child.visible = show;
+      });
+    }
+  }
+}
   /**
    * 处理材料厚度变化
    * @param value 新的厚度值
@@ -595,6 +704,11 @@ export class ThreeJSCommandProcessor {
     // 显示所有变换控件
     this.showCombinedTransformControls();
 
+      // 如果处于层叠模式，变换后重新生成层叠切片
+  if (this.isStackedLayersMode && this.originalModelId) {
+    this.debounceRegenerateStackedLayers();
+  }
+
     return objectId;
   }
 
@@ -713,7 +827,10 @@ export class ThreeJSCommandProcessor {
 
     // 显示所有变换控件
     this.showCombinedTransformControls();
-
+  // 如果处于层叠模式，变换后重新生成层叠切片
+  if (this.isStackedLayersMode && this.originalModelId) {
+    this.debounceRegenerateStackedLayers();
+  }
     return objectId;
   }
 
@@ -808,7 +925,10 @@ export class ThreeJSCommandProcessor {
 
     // 显示所有变换控件
     this.showCombinedTransformControls();
-
+  // 如果处于层叠模式，变换后重新生成层叠切片
+  if (this.isStackedLayersMode && this.originalModelId) {
+    this.debounceRegenerateStackedLayers();
+  }
     return objectId;
   }
 
@@ -1216,18 +1336,27 @@ export class ThreeJSCommandProcessor {
 
       // 克隆并添加对象
       const clonedObject = object.clone();
+      if (this.isStackedLayersMode) {
+  clonedObject.visible = false;
+}
       this.glViewer.scene.add(clonedObject);
 
       // 保存对当前场景对象的引用
       this.currentSceneObject = clonedObject;
 
       // 确保对象可见
-      clonedObject.visible = true;
+      //clonedObject.visible = true;
       if (clonedObject instanceof THREE.Group) {
         clonedObject.traverse((child) => {
           child.visible = true;
         });
       }
+
+      // 在onRotateValueChange、onScaleValueChange、onTranslateValueChange方法结尾添加
+// 更新后，如果处于层叠模式，重新生成层叠切片
+if (this.isStackedLayersMode && this.originalModelId) {
+  this.debounceRegenerateStackedLayers();
+}
 
       // 计算边界框
       const boundingBox = new THREE.Box3().setFromObject(clonedObject);
