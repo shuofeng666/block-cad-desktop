@@ -305,50 +305,48 @@ private async handleIfStatement(cmd: any): Promise<any> {
    * 生成层叠切片
    * @param cmd 命令参数
    */
-  private async generateStackedLayers(cmd: any): Promise<string> {
-    // 获取参数
-    const materialThickness = cmd.args.materialThickness || 3;
-    const layerCount = cmd.args.layerCount || 10;
-
-    // 处理子命令获取模型
-    let objectId = scope.context["_currentObjectId"];
-    if (cmd.children && cmd.children.length > 0) {
-      for (const child of cmd.children) {
-        const result = await this.processCommand(child);
-        if (result) objectId = result;
-      }
+private async generateStackedLayers(cmd: any): Promise<string> {
+  // 获取参数
+  const materialThickness = cmd.args.materialThickness || 3;
+  // 不再从命令参数中获取层数
+  
+  // 处理子命令获取模型
+  let objectId = scope.context["_currentObjectId"];
+  if (cmd.children && cmd.children.length > 0) {
+    for (const child of cmd.children) {
+      const result = await this.processCommand(child);
+      if (result) objectId = result;
     }
-
-    if (!objectId) {
-      console.error("[generateStackedLayers] No object ID found");
-      return null;
-    }
-
-    // 记录原始模型ID，用于后续变换后重新生成层叠切片
-    this.originalModelId = objectId;
-
-    // 启用层叠模式标志
-    this.isStackedLayersMode = true;
-
-    // 先清除之前的层
-    this.removeStackedLayers();
-
-    // 存储材料厚度和层数参数，用于后续变换后重新生成
-    scope.setVar("_stackedLayersMaterialThickness", materialThickness);
-    scope.setVar("_stackedLayersCount", layerCount);
-
-    // 生成层叠切片
-    const stackedLayersId = await this.generateStackedLayersFromObject(
-      objectId,
-      materialThickness,
-      layerCount
-    );
-
-    // 显示控制面板
-    this.showStackedLayersControls(materialThickness, layerCount);
-
-    return stackedLayersId;
   }
+
+  if (!objectId) {
+    console.error("[generateStackedLayers] No object ID found");
+    return null;
+  }
+
+  // 记录原始模型ID，用于后续变换后重新生成层叠切片
+  this.originalModelId = objectId;
+
+  // 启用层叠模式标志
+  this.isStackedLayersMode = true;
+
+  // 先清除之前的层
+  this.removeStackedLayers();
+
+  // 存储材料厚度参数，用于后续变换后重新生成
+  scope.setVar("_stackedLayersMaterialThickness", materialThickness);
+  
+  // 生成层叠切片
+  const stackedLayersId = await this.generateStackedLayersFromObject(
+    objectId,
+    materialThickness
+  );
+
+  // 显示控制面板
+  this.showStackedLayersControls(materialThickness);
+
+  return stackedLayersId;
+}
 
   private removeStackedLayers(): void {
     // 从场景中移除层
@@ -370,43 +368,52 @@ private async handleIfStatement(cmd: any): Promise<any> {
   /**
    * 从对象ID生成层叠切片
    */
-  private async generateStackedLayersFromObject(
-    objectId: string,
-    materialThickness: number,
-    layerCount: number
-  ): Promise<string> {
-    console.log(
-      "[generateStackedLayersFromObject] Starting with object ID:",
-      objectId
-    );
+private async generateStackedLayersFromObject(
+  objectId: string,
+  materialThickness: number
+): Promise<string> {
+  console.log(
+    "[generateStackedLayersFromObject] Starting with object ID:",
+    objectId
+  );
 
-    const obj = this.currentObjects.get(objectId);
-    if (!obj || !(obj instanceof THREE.Mesh)) {
-      console.error("[generateStackedLayersFromObject] No valid mesh found");
-      return null;
-    }
+  const obj = this.currentObjects.get(objectId);
+  if (!obj || !(obj instanceof THREE.Mesh)) {
+    console.error("[generateStackedLayersFromObject] No valid mesh found");
+    return null;
+  }
 
-    // 计算边界框和尺寸
-    const boundingBox = new THREE.Box3().setFromObject(obj);
-    const size = boundingBox.getSize(new THREE.Vector3());
+  // 计算边界框和尺寸
+  const boundingBox = new THREE.Box3().setFromObject(obj);
+  const size = boundingBox.getSize(new THREE.Vector3());
 
-    // 存储模型尺寸
-    this.modelDimensions = {
-      width: size.x,
-      height: size.y,
-      depth: size.z,
-    };
+  // 存储模型尺寸
+  this.modelDimensions = {
+    width: size.x,
+    height: size.y,
+    depth: size.z,
+  };
 
-    console.log(
-      "[generateStackedLayersFromObject] Model dimensions:",
-      this.modelDimensions
-    );
+  console.log(
+    "[generateStackedLayersFromObject] Model dimensions:",
+    this.modelDimensions
+  );
 
-    // 清除之前的层数据
-    this.stackedShapes = [];
+  // 清除之前的层数据
+  this.stackedShapes = [];
+  
+  // 自动计算合适的层数
+  // 层数 = 模型高度 / 材料厚度
+  // 至少要有3层，最多50层
+  const layerCount = Math.max(3, Math.min(50, Math.floor(size.y / materialThickness)));
+  
+  // 存储计算出的层数
+  scope.setVar("_stackedLayersCount", layerCount);
+  
+  console.log(`[generateStackedLayersFromObject] Auto calculated layer count: ${layerCount}`);
 
-    // 计算层间距
-    const layerSpacing = size.y / layerCount;
+  // 计算层间距
+  const layerSpacing = size.y / layerCount;
 
     // 生成每一层
     for (let i = 0; i < layerCount; i++) {
@@ -501,6 +508,14 @@ private async handleIfStatement(cmd: any): Promise<any> {
 
     return stackedLayersId;
   }
+
+
+
+
+
+
+
+
   private async regenerateStackedLayers(): Promise<void> {
     // 获取材料厚度和层数
     const materialThickness =
@@ -572,77 +587,62 @@ private async handleIfStatement(cmd: any): Promise<any> {
    * @param materialThickness 材料厚度
    * @param layerCount 层数
    */
-  private showStackedLayersControls(
-    materialThickness: number,
-    layerCount: number
-  ): void {
-    if (!this.controlPanel) {
-      console.warn("[showStackedLayersControls] Control panel not available");
-      return;
-    }
-
-    // 清除当前控制面板
-    this.controlPanel.clear();
-
-    // 设置新的控制面板
-    this.controlPanel.setCommand(
-      "stacked_layers_controls",
-      "Stacked Layers Controls"
-    );
-
-    // 添加材料厚度控制
-    this.controlPanel.addControl({
-      id: "materialThickness",
-      type: "slider",
-      label: "Material Thickness (mm)",
-      min: 1,
-      max: 5,
-      step: 0.5,
-      value: materialThickness,
-      onChange: (value) => this.onMaterialThicknessChange(value as number),
-    });
-
-    // 添加层数控制
-    this.controlPanel.addControl({
-      id: "layerCount",
-      type: "slider",
-      label: "Number of Layers",
-      min: 3,
-      max: 50,
-      step: 1,
-      value: layerCount,
-      onChange: (value) => this.onLayerCountChange(value as number),
-    });
-
-    // 添加显示/隐藏原始模型选项
-    this.controlPanel.addControl({
-      id: "showOriginalModel",
-      type: "checkbox",
-      label: "Show Original Model",
-      value: false, // 默认不显示原始模型
-      onChange: (value) => this.onShowOriginalModelChange(value as boolean),
-    });
-
-    // 添加重新生成按钮控件
-    this.controlPanel.addControl({
-      id: "regenerate",
-      type: "slider", // 由于没有按钮类型，使用滑块来模拟
-      label: "Regenerate Layers",
-      min: 0,
-      max: 1,
-      step: 1,
-      value: 0,
-      onChange: (value) => {
-        if (value === 1) {
-          this.regenerateStackedLayers();
-          // 重置滑块
-          setTimeout(() => {
-            this.controlPanel.updateControl("regenerate", 0);
-          }, 500);
-        }
-      },
-    });
+private showStackedLayersControls(materialThickness: number): void {
+  if (!this.controlPanel) {
+    console.warn("[showStackedLayersControls] Control panel not available");
+    return;
   }
+
+  // 清除当前控制面板
+  this.controlPanel.clear();
+
+  // 设置新的控制面板
+  this.controlPanel.setCommand(
+    "stacked_layers_controls",
+    "Stacked Layers Controls"
+  );
+
+  // 添加材料厚度控制
+  this.controlPanel.addControl({
+    id: "materialThickness",
+    type: "slider",
+    label: "Material Thickness (mm)",
+    min: 1,
+    max: 5,
+    step: 0.5,
+    value: materialThickness,
+    onChange: (value) => this.onMaterialThicknessChange(value as number),
+  });
+
+  // 添加显示/隐藏原始模型选项
+  this.controlPanel.addControl({
+    id: "showOriginalModel",
+    type: "checkbox",
+    label: "Show Original Model",
+    value: false, // 默认不显示原始模型
+    onChange: (value) => this.onShowOriginalModelChange(value as boolean),
+  });
+
+  // 添加重新生成按钮控件
+  this.controlPanel.addControl({
+    id: "regenerate",
+    type: "slider",
+    label: "Regenerate Layers",
+    min: 0,
+    max: 1,
+    step: 1,
+    value: 0,
+    onChange: (value) => {
+      if (value === 1) {
+        this.regenerateStackedLayers();
+        // 重置滑块
+        setTimeout(() => {
+          this.controlPanel.updateControl("regenerate", 0);
+        }, 500);
+      }
+    },
+  });
+}
   /**
    * 处理显示/隐藏原始模型选项
    * @param show 是否显示原始模型
@@ -670,15 +670,15 @@ private async handleIfStatement(cmd: any): Promise<any> {
    * 处理材料厚度变化
    * @param value 新的厚度值
    */
-  private onMaterialThicknessChange(value: number): void {
-    console.log(`[onMaterialThicknessChange] Value changed to: ${value}`);
+private onMaterialThicknessChange(value: number): void {
+  console.log(`[onMaterialThicknessChange] Value changed to: ${value}`);
 
-    // 更新存储的材料厚度
-    scope.setVar("_stackedLayersMaterialThickness", value);
+  // 更新存储的材料厚度
+  scope.setVar("_stackedLayersMaterialThickness", value);
 
-    // 如果需要，可以添加实时更新层的代码
-    // this.updateStackedLayers();
-  }
+  // 立即触发重新生成
+  this.debounceRegenerateStackedLayers();
+}
 
   /**
    * 处理层数变化
@@ -942,6 +942,7 @@ private async handleIfStatement(cmd: any): Promise<any> {
     // 如果处于层叠模式，变换后重新生成层叠切片
     if (this.isStackedLayersMode && this.originalModelId) {
       this.debounceRegenerateStackedLayers();
+      
     }
 
     return objectId;
@@ -1013,6 +1014,11 @@ private async handleIfStatement(cmd: any): Promise<any> {
           : currentRotationZ
       } rad, New: ${angleRadians} rad`
     );
+
+    // 添加这段代码：如果处于层叠模式，重新生成层叠切片
+  if (this.isStackedLayersMode && this.originalModelId) {
+    this.debounceRegenerateStackedLayers();
+  }
   }
 
   /**
@@ -1101,6 +1107,10 @@ private async handleIfStatement(cmd: any): Promise<any> {
     console.log(
       `[onScaleValueChange] Applied new scale. Previous: ${currentScaleX}, New: ${value}`
     );
+
+      if (this.isStackedLayersMode && this.originalModelId) {
+    this.debounceRegenerateStackedLayers();
+  }
   }
 
   /**

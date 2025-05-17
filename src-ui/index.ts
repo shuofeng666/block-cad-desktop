@@ -252,51 +252,49 @@ if (t1) {
       blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
     }
     // 添加层叠切片示例
-    else if (cmd == "stacked_layers_example") {
-      const exampleCode = {
-        blocks: {
-          languageVersion: 0,
-          blocks: [
-            {
-              type: "upload_stl",
+else if (cmd == "stacked_layers_example") {
+  const exampleCode = {
+    blocks: {
+      languageVersion: 0,
+      blocks: [
+        {
+          type: "upload_stl",
+          fields: {
+            FILE_UPLOAD: "default.stl",
+          },
+          next: {
+            block: {
+              type: "rotate_model",
               fields: {
-                FILE_UPLOAD: "default.stl",
+                ROTATE_X: "0",
+                ROTATE_Y: "0",
+                ROTATE_Z: "0",
               },
               next: {
                 block: {
-                  type: "rotate_model",
+                  type: "generate_stacked_layers",
                   fields: {
-                    ROTATE_X: "0",
-                    ROTATE_Y: "0",
-                    ROTATE_Z: "0",
+                    MATERIAL_THICKNESS: "3",
+                    // 移除 LAYER_COUNT 字段
+                  },
+                  inputs: {
+                    MODEL: {
+                      block: {
+                        type: "create_cube",
+                        fields: {
+                          SIZE: "50",
+                        },
+                      },
+                    },
                   },
                   next: {
                     block: {
-                      type: "generate_stacked_layers",
-                      fields: {
-                        MATERIAL_THICKNESS: "3",
-                        LAYER_COUNT: "10",
-                      },
-                      inputs: {
-                        MODEL: {
-                          block: {
-                            type: "create_cube",
-                            fields: {
-                              SIZE: "50",
-                            },
-                          },
-                        },
-                      },
+                      type: "show_in_viewer",
                       next: {
                         block: {
-                          type: "show_in_viewer",
-                          next: {
-                            block: {
-                              type: "export_stacked_layers_svg",
-                              fields: {
-                                FILENAME: "stacked_layer_example",
-                              },
-                            },
+                          type: "export_stacked_layers_svg",
+                          fields: {
+                            FILENAME: "stacked_layer_example",
                           },
                         },
                       },
@@ -305,16 +303,18 @@ if (t1) {
                 },
               },
             },
-          ],
+          },
         },
-      };
-      blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
-      statusBar.setStatus(
-        `Loaded Stacked Layers example. Click "Render" to see the result.`,
-        "info",
-        0
-      );
-    }
+      ],
+    },
+  };
+  blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
+  statusBar.setStatus(
+    `Loaded Stacked Layers example. Click "Render" to see the result.`,
+    "info",
+    0
+  );
+}
 else if (cmd == "programmatic_wire_mesh_example") {
   const exampleCode = {
     blocks: {
