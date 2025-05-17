@@ -7,8 +7,8 @@ import { GLViewer } from "./threejs/GLViewer";
 import "./styles/app.css";
 import { BlocklyEditor } from "./core/BlockEditor";
 import LightTheme from "./styles/theme-light";
-import { registerWireMeshComponentBlocks } from "./blocks/WireMeshComponentBlocks";
-import { registerLogicBlocks } from "./blocks/LogicBlocks";
+//import { registerWireMeshComponentBlocks } from "./blocks/WireMeshComponentBlocks";
+//import { registerLogicBlocks } from "./blocks/LogicBlocks";
 import {
   getBlocks,
   getToolbox,
@@ -97,19 +97,29 @@ if (t1) {
         try {
           const wireMesh = scope.context["_wireMesh"];
           if (!wireMesh) {
-            statusBar.setStatus("No wire mesh found. Please generate a wire mesh first.", "warn", 0);
+            statusBar.setStatus(
+              "No wire mesh found. Please generate a wire mesh first.",
+              "warn",
+              0
+            );
             return;
           }
 
-          const filename = prompt("Enter filename for CSV export:", "wire_mesh") || "wire_mesh";
-          
+          const filename =
+            prompt("Enter filename for CSV export:", "wire_mesh") ||
+            "wire_mesh";
+
           // 使用 ThreeJSProcessor 的导出功能
           await threeJSProcessor.processCommand({
             id: "export_wire_csv",
-            args: { filename }
+            args: { filename },
           });
 
-          statusBar.setStatus(`Wire mesh exported to ${filename}_*.csv`, "info", 0);
+          statusBar.setStatus(
+            `Wire mesh exported to ${filename}_*.csv`,
+            "info",
+            0
+          );
         } catch (error) {
           console.error("Error exporting CSV:", error);
           statusBar.setStatus(`Error: ${error.message}`, "error", 0);
@@ -299,7 +309,11 @@ if (t1) {
         },
       };
       blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
-      statusBar.setStatus(`Loaded Stacked Layers example. Click "Render" to see the result.`, "info", 0);
+      statusBar.setStatus(
+        `Loaded Stacked Layers example. Click "Render" to see the result.`,
+        "info",
+        0
+      );
     }
   });
 
@@ -329,7 +343,6 @@ if (t1) {
     `<span class="material-symbols-outlined">play_arrow</span>`,
     "Render Drawing"
   );
- 
 
   // 添加 Wire Mesh 示例按钮
   toolbar.addIcon(
@@ -343,13 +356,13 @@ if (t1) {
     `<span class="material-symbols-outlined">grid_4x4</span>`,
     "Component Wire Mesh Example"
   );
-  
+
   toolbar.addIcon(
     "programmatic_wire_mesh_example",
     `<span class="material-symbols-outlined">code</span>`,
     "Programmatic Wire Mesh Example"
   );
-  
+
   // 添加层叠切片示例按钮
   toolbar.addIcon(
     "stacked_layers_example",
@@ -365,7 +378,9 @@ if (t2) {
   glViewer = new GLViewer(t2);
 }
 
-var controlPanelElement = document.getElementById("control-panel") as HTMLDivElement;
+var controlPanelElement = document.getElementById(
+  "control-panel"
+) as HTMLDivElement;
 var controlPanel: ControlPanel;
 if (controlPanelElement) {
   controlPanel = new ControlPanel(controlPanelElement);
@@ -374,7 +389,7 @@ if (controlPanelElement) {
   // 创建一个临时控制面板容器
   controlPanelElement = document.createElement("div");
   controlPanelElement.id = "control-panel";
-  
+
   // 添加到右侧面板
   const rightPanel = document.querySelector(".right");
   if (rightPanel) {
@@ -387,8 +402,8 @@ if (controlPanelElement) {
 
 // 注册所有块定义 - 先注册到 Blockly
 registerThreeJSBlocks(getCodeGenerator(), addToolboxCatogery);
-registerWireMeshComponentBlocks(getCodeGenerator(), addToolboxCatogery);
-registerLogicBlocks(getCodeGenerator(), addToolboxCatogery);
+//registerWireMeshComponentBlocks(getCodeGenerator(), addToolboxCatogery);
+//registerLogicBlocks(getCodeGenerator(), addToolboxCatogery);
 
 // 创建 Three.js 处理器（必须在 GLViewer 之后创建）
 const threeJSProcessor = new ThreeJSCommandProcessor(glViewer, controlPanel);
