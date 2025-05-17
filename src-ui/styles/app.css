@@ -18,8 +18,6 @@ body {
   user-select: none;
 }
 
-
-
 /* Blockly 工具箱改进 */
 .blocklyToolboxDiv {
   background: linear-gradient(180deg, #6c5ce7 0%, #5f4dd6 100%) !important;
@@ -78,9 +76,6 @@ body {
   font-weight: 500;
 }
 
-
-
-
 /* 添加确保正确布局的CSS */
 .app {
   display: flex;
@@ -119,11 +114,13 @@ body {
   overflow: hidden;
 }
 
+/* 重要：确保控制面板能够正确显示 */
 #control-panel {
-  position: relative;
-  width: 100%;
-  height: 30%;
-  overflow: auto;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 250px;
+  z-index: 1000;
 }
 
 .gutter {
@@ -156,9 +153,6 @@ body {
   width: 100%;
   border-top: 1px solid #ccc;
 }
-
-
-
 
 /* 滚动条美化 */
 ::-webkit-scrollbar {
@@ -371,5 +365,14 @@ body {
   
   .blocklyToolboxDiv {
     padding: 8px;
+  }
+  
+  /* 移动设备下控制面板的位置 */
+  #control-panel {
+    top: auto;
+    right: auto;
+    bottom: 20px;
+    left: 20px;
+    width: calc(100% - 40px);
   }
 }
