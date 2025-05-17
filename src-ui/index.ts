@@ -43,13 +43,19 @@ var blockEditor = new BlocklyEditor(
 );
 
 // 分割面板
+// 替换现有的 Split 配置
 Split([".left", ".right"], {
-  sizes: [30, 70],
+  sizes: [40, 60],
   gutterSize: 5,
-  onDrag: function (sizes) {
-    resizeAll();
-  },
+  minSize: [200, 300], // 添加最小尺寸限制
+  onDrag: function () {
+    // 延迟调用 resizeAll，防止过于频繁导致性能问题
+    if (resizeTimeout) clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(resizeAll, 100);
+  }
 });
+
+let resizeTimeout: any = null;
 
 // 创建工具栏
 var t1 = document.getElementById("toolbar");
@@ -643,9 +649,49 @@ const threeJSProcessor = new ThreeJSCommandProcessor(glViewer, controlPanel);
 
 // 窗口调整大小处理
 function resizeAll() {
-  if (glViewer) glViewer.resize();
-  if (blockEditor) blockEditor.resizeEditor();
+  // 获取当前视图宽高
+  const leftPanel = document.querySelector('.left') as HTMLElement;
+  const rightPanel = document.querySelector('.right') as HTMLElement;
+  
+  if (!leftPanel || !rightPanel) return;
+  
+  // 确保两边都有合理的尺寸
+  const leftWidth = leftPanel.offsetWidth;
+  const leftHeight = leftPanel.offsetHeight;
+  const rightWidth = rightPanel.offsetWidth;
+  const rightHeight = rightPanel.offsetHeight;
+  
+  console.log(`Resizing: Left(${leftWidth}x${leftHeight}), Right(${rightWidth}x${rightHeight})`);
+  
+  // 调整 BlocklyEditor
+  if (blockEditor && leftWidth > 0 && leftHeight > 0) {
+    try {
+      blockEditor.resizeEditor();
+    } catch (e) {
+      console.error("Error resizing BlocklyEditor:", e);
+    }
+  }
+  
+  // 调整 GLViewer
+  if (glViewer && rightWidth > 0 && rightHeight > 0) {
+    try {
+      glViewer.resize();
+    } catch (e) {
+      console.error("Error resizing GLViewer:", e);
+    }
+  }
 }
+
+// 改进窗口调整大小事件处理
+window.addEventListener("resize", function() {
+  // 清除之前的延迟调用
+  if (resizeTimeout) clearTimeout(resizeTimeout);
+  // 设置新的延迟调用
+  resizeTimeout = setTimeout(resizeAll, 200);
+}, false);
+
+// 初始调整大小
+setTimeout(resizeAll, 500);
 window.addEventListener("resize", resizeAll, false);
 resizeAll();
 

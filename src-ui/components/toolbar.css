@@ -12,6 +12,7 @@
   overflow: visible; /* 确保工具提示可以显示 */
   margin: 0; /* 确保没有外边距 */
   border-radius: 8px 8px 0 0; /* 只有顶部圆角 */
+   z-index: 1000; 
 }
 
 /* 工具栏背景装饰 */
