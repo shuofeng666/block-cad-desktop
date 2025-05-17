@@ -1,4 +1,98 @@
 {
+  
+  "Programming": {
+    "id": "programming",
+    "blocks": {
+      "variable_declaration": {
+        "title": "Set Variable",
+        "arg": [
+          { "name": "varName", "type": "str", "value": "x" },
+          { "name": "value", "type": "num", "value": "0" }
+        ]
+      },
+      "variable_get": {
+        "title": "Get Variable",
+        "arg": [{ "name": "varName", "type": "str", "value": "x" }]
+      },
+      "number": {
+        "title": "Number",
+        "arg": [{ "name": "num", "type": "num", "value": "0" }]
+      },
+      "math_operation": {
+        "title": "Math Operation",
+        "arg": [
+          { "name": "A", "type": "num", "value": "1" },
+          {
+            "name": "OP",
+            "type": "dropdown",
+            "options": ["ADD", "SUBTRACT", "MULTIPLY", "DIVIDE"]
+          },
+          { "name": "B", "type": "num", "value": "1" }
+        ]
+      },
+      "comparison": {
+        "title": "Compare",
+        "arg": [
+          { "name": "A", "type": "num", "value": "1" },
+          {
+            "name": "OP",
+            "type": "dropdown",
+            "options": ["EQ", "NEQ", "GT", "LT", "GTE", "LTE"]
+          },
+          { "name": "B", "type": "num", "value": "1" }
+        ]
+      },
+      "for_loop": {
+        "title": "For Loop",
+        "arg": [
+          { "name": "varName", "type": "str", "value": "i" },
+          { "name": "from", "type": "num", "value": "0" },
+          { "name": "to", "type": "num", "value": "10" },
+          { "name": "step", "type": "num", "value": "1" }
+        ]
+      },
+      "if_statement": {
+        "title": "If Statement",
+        "arg": [{ "name": "condition", "type": "bool", "value": "true" }]
+      }
+    }
+  },
+  "Wire Mesh Components": {
+    "id": "wire_mesh_components",
+    "blocks": {
+      "initialize_wire_mesh": { "title": "Initialize Wire Mesh", "arg": [] },
+      "add_horizontal_wire": {
+        "title": "Add Horizontal Wire",
+        "arg": [
+          { "name": "position", "type": "num", "value": "0" },
+          { "name": "thickness", "type": "num", "value": "0.5" },
+          { "name": "color", "type": "color", "value": "#ff0000" }
+        ]
+      },
+      "add_vertical_wire": {
+        "title": "Add Vertical Wire",
+        "arg": [
+          { "name": "position", "type": "num", "value": "0" },
+          { "name": "thickness", "type": "num", "value": "0.5" },
+          { "name": "color", "type": "color", "value": "#00ff00" }
+        ]
+      },
+      "convert_to_tubes": {
+        "title": "Convert to Tubes",
+        "arg": [{ "name": "thickness", "type": "num", "value": "0.5" }]
+      },
+      "collect_wire_mesh": {
+        "title": "Collect Wire Mesh",
+        "arg": []
+      },
+      "export_component_wire_csv": {
+        "title": "Export Wire Mesh CSV",
+        "arg": [
+          { "name": "filename", "type": "str", "value": "component_wire_mesh" }
+        ]
+      }
+    }
+  },
   "3D Model": {
     "id": "model_3d",
     "blocks": {
