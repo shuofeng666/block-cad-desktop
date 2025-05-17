@@ -58,24 +58,47 @@ private async processCommand(cmd: any): Promise<any> {
         result = null;
         break;
 
-      case "add_horizontal_wire":
-        this.addHorizontalWire(
-          cmd.args.position,
-          cmd.args.thickness,
-          cmd.args.color
-        );
-        result = null;
-        break;
+case "add_horizontal_wire":
+  // Check if position might be a variable name
+  let horizontalPosition = cmd.args.position;
+  if (typeof horizontalPosition === 'string' || horizontalPosition === 0) {
+    // If this is likely a variable reference
+    const positionVar = scope.context["position"];
+    if (positionVar !== undefined) {
+      horizontalPosition = positionVar;
+      console.log(`[add_horizontal_wire] Using position from variable: ${horizontalPosition}`);
+    }
+  }
+  
+  this.addHorizontalWire(
+    horizontalPosition,
+    cmd.args.thickness,
+    cmd.args.color
+  );
+  result = null;
+  break;
 
-      case "add_vertical_wire":
-        this.addVerticalWire(
-          cmd.args.position,
-          cmd.args.thickness,
-          cmd.args.color
-        );
-        result = null;
-        break;
-
+// Override the addVerticalWire handler in processCommand method
+// In processCommand method, replace the existing add_vertical_wire case with:
+case "add_vertical_wire":
+  // Check if position might be a variable name
+  let verticalPosition = cmd.args.position;
+  if (typeof verticalPosition === 'string' || verticalPosition === 0) {
+    // If this is likely a variable reference
+    const positionVar = scope.context["position"];
+    if (positionVar !== undefined) {
+      verticalPosition = positionVar;
+      console.log(`[add_vertical_wire] Using position from variable: ${verticalPosition}`);
+    }
+  }
+  
+  this.addVerticalWire(
+    verticalPosition,
+    cmd.args.thickness,
+    cmd.args.color
+  );
+  result = null;
+  break;
       case "convert_to_tubes":
         this.convertToTubes(cmd.args.thickness);
         result = null;
@@ -167,25 +190,56 @@ private async processCommand(cmd: any): Promise<any> {
 }
 
 // Logic command handlers
+// Improved variable handling for ThreeJSCommandProcessor
+
+// handleVariableDeclaration method update - this should replace the existing method:
 private handleVariableDeclaration(cmd: any): null {
   const { varName, value } = cmd.args;
   
-  // Try to parse the value as a number if possible
+  // Try to parse the value as a number or expression
   let parsedValue;
+  
   try {
-    parsedValue = JSON.parse(value);
+    // First check if it's a simple number value
+    parsedValue = parseFloat(value);
+    
+    // If it's NaN, try evaluating it as an expression
+    if (isNaN(parsedValue)) {
+      // Handle simple expressions with variables
+      if (value.includes("+") || value.includes("-") || 
+          value.includes("*") || value.includes("/")) {
+        
+        // Replace variable names with their values
+        let processedExpression = value;
+        for (const key in scope.context) {
+          if (processedExpression.includes(key)) {
+            processedExpression = processedExpression.replace(
+              new RegExp(key, 'g'), 
+              scope.context[key]
+            );
+          }
+        }
+        
+        // Evaluate the expression
+        parsedValue = eval(processedExpression);
+      } else {
+        // Not a number or expression, use as string
+        parsedValue = value;
+      }
+    }
   } catch (e) {
-    // If parsing fails, use the original string value
-    parsedValue = value;
+    console.error(`[handleVariableDeclaration] Error parsing value: ${value}`, e);
+    parsedValue = value; // Use original value on error
   }
   
   // Store the variable in the scope context
   scope.setVar(varName, parsedValue);
-  console.log(`[handleVariableDeclaration] Set variable ${varName} = ${parsedValue}`);
+  console.log(`[handleVariableDeclaration] Set variable ${varName} = ${parsedValue} (original value: ${value})`);
   
   return null;
 }
 
+// forLoop method update - this should replace the existing method:
 private async handleForLoop(cmd: any): Promise<any> {
   const { varName, from, to, step } = cmd.args;
   let result = null;

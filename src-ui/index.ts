@@ -315,6 +315,240 @@ if (t1) {
         0
       );
     }
+else if (cmd == "programmatic_wire_mesh_example") {
+  const exampleCode = {
+    blocks: {
+      languageVersion: 0,
+      blocks: [
+        {
+          type: "upload_stl",
+          fields: {
+            FILE_UPLOAD: "default.stl",
+          },
+          next: {
+            block: {
+              type: "variable_declaration",
+              fields: {
+                VAR_NAME: "wireCount",
+              },
+              inputs: {
+                VALUE: {
+                  block: {
+                    type: "number",
+                    fields: {
+                      NUM: 10
+                    }
+                  }
+                }
+              },
+              next: {
+                block: {
+                  type: "variable_declaration",
+                  fields: {
+                    VAR_NAME: "modelHeight",
+                  },
+                  inputs: {
+                    VALUE: {
+                      block: {
+                        type: "number",
+                        fields: {
+                          NUM: 100
+                        }
+                      }
+                    }
+                  },
+                  next: {
+                    block: {
+                      type: "variable_declaration",
+                      fields: {
+                        VAR_NAME: "spacing",
+                      },
+                      inputs: {
+                        VALUE: {
+                          block: {
+                            type: "math_operation",
+                            fields: {
+                              OP: "DIVIDE"
+                            },
+                            inputs: {
+                              A: {
+                                block: {
+                                  type: "variable_get",
+                                  fields: {
+                                    VAR_NAME: "modelHeight"
+                                  }
+                                }
+                              },
+                              B: {
+                                block: {
+                                  type: "variable_get",
+                                  fields: {
+                                    VAR_NAME: "wireCount"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      next: {
+                        block: {
+                          type: "initialize_wire_mesh",
+                          next: {
+                            block: {
+                              type: "for_loop",
+                              fields: {
+                                VAR_NAME: "i",
+                                FROM: 0,
+                                TO: 10,
+                                STEP: 1
+                              },
+                              inputs: {
+                                DO: {
+                                  block: {
+                                    type: "variable_declaration",
+                                    fields: {
+                                      VAR_NAME: "position",
+                                    },
+                                    inputs: {
+                                      VALUE: {
+                                        block: {
+                                          type: "math_operation",
+                                          fields: {
+                                            OP: "MULTIPLY"
+                                          },
+                                          inputs: {
+                                            A: {
+                                              block: {
+                                                type: "variable_get",
+                                                fields: {
+                                                  VAR_NAME: "i"
+                                                }
+                                              }
+                                            },
+                                            B: {
+                                              block: {
+                                                type: "variable_get",
+                                                fields: {
+                                                  VAR_NAME: "spacing"
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    },
+                                    next: {
+                                      block: {
+                                        type: "add_horizontal_wire",
+                                        fields: {
+                                          POSITION: 0,
+                                          THICKNESS: 0.5,
+                                          COLOR: "#ff0000"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              next: {
+                                block: {
+                                  type: "for_loop",
+                                  fields: {
+                                    VAR_NAME: "j",
+                                    FROM: 0,
+                                    TO: 5,
+                                    STEP: 1
+                                  },
+                                  inputs: {
+                                    DO: {
+                                      block: {
+                                        type: "variable_declaration",
+                                        fields: {
+                                          VAR_NAME: "position",
+                                        },
+                                        inputs: {
+                                          VALUE: {
+                                            block: {
+                                              type: "math_operation",
+                                              fields: {
+                                                OP: "MULTIPLY"
+                                              },
+                                              inputs: {
+                                                A: {
+                                                  block: {
+                                                    type: "variable_get",
+                                                    fields: {
+                                                      VAR_NAME: "j"
+                                                    }
+                                                  }
+                                                },
+                                                B: {
+                                                  block: {
+                                                    type: "number",
+                                                    fields: {
+                                                      NUM: 20
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        },
+                                        next: {
+                                          block: {
+                                            type: "add_vertical_wire",
+                                            fields: {
+                                              POSITION: 0,
+                                              THICKNESS: 0.5,
+                                              COLOR: "#00ff00"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  next: {
+                                    block: {
+                                      type: "convert_to_tubes",
+                                      fields: {
+                                        THICKNESS: 0.8
+                                      },
+                                      next: {
+                                        block: {
+                                          type: "collect_wire_mesh",
+                                          next: {
+                                            block: {
+                                              type: "show_in_viewer"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  };
+  blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
+  statusBar.setStatus(
+    `Loaded Programmatic Wire Mesh example. Click "Render" to see the result.`,
+    "info",
+    0
+  );
+}
   });
 
   // 添加工具栏按钮
@@ -402,8 +636,7 @@ if (controlPanelElement) {
 
 // 注册所有块定义 - 先注册到 Blockly
 registerThreeJSBlocks(getCodeGenerator(), addToolboxCatogery);
-//registerWireMeshComponentBlocks(getCodeGenerator(), addToolboxCatogery);
-//registerLogicBlocks(getCodeGenerator(), addToolboxCatogery);
+
 
 // 创建 Three.js 处理器（必须在 GLViewer 之后创建）
 const threeJSProcessor = new ThreeJSCommandProcessor(glViewer, controlPanel);
