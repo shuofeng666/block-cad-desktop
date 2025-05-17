@@ -806,6 +806,7 @@ export function registerThreeJSBlocks(
   // 注册所有块
   Object.entries(blockDefinitions).forEach(
     ([blockId, { category, definition, generator }]) => {
+      console.log(`注册块: ${blockId} 到类别: ${category.name}`);
       Blockly.Blocks[blockId] = definition;
       codeGenerator[blockId] = generator;
 

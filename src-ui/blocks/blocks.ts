@@ -61,10 +61,14 @@ export function addBlock(id: string, block: {}, codeGen: Function) {
 }
 
 export function addToolboxCatogery(name: string) {
+  // 修改这里，确保颜色索引始终在有效范围内
+  var colorIndex = toolbox.contents.length % colors.length;
+  var color = colors[colorIndex];
+  
   var item = {
     "kind": "category",
     "name": name,
-    "colour": colors[toolbox.contents.length],
+    "colour": color,
     "contents": []
   }
   toolbox.contents.push(item);
