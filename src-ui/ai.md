@@ -359,3 +359,136 @@ When extending the project with new features:
 - Inspect DOM elements to verify correct CSS properties
 - Add temporary visual aids (e.g., distinctive colors) to help identify issues
 - Use the status bar for displaying operation progress and error states
+
+
+
+代码组织----2025/5/17
+最近，我们对代码进行了重构，将原本集中在 ThreeJSBlocks.ts 文件中的块定义分离到多个专门的文件中，提高了代码的模块化和可维护性。
+文件结构
+src-ui/blocks/
+├── FileUploadField.ts          - 文件上传字段组件
+├── ModelBlockDefinitions.ts    - 3D 模型相关块定义
+├── ProgrammingBlockDefinitions.ts - 编程逻辑块定义
+├── StackedLayersBlockDefinitions.ts - 层叠激光切割块定义
+├── ThreeJSBlocks.ts            - 主块注册和组织文件
+├── TransformBlockDefinitions.ts - 模型变换块定义
+├── VisualizationBlockDefinitions.ts - 可视化块定义
+├── WireMeshBlockDefinitions.ts - 线框网格块定义
+├── blocks.ts                   - 块系统核心功能
+└── blocks_def.json             - 块基本定义数据
+模块化设计
+每个模块文件（如 ModelBlockDefinitions.ts）都导出一个函数，该函数返回该类别的所有块定义。例如：
+typescript// src-ui/blocks/ModelBlockDefinitions.ts
+export function getModelBlockDefinitions(codeGenerator: any) {
+  return {
+    "load_stl": { ... },
+    "create_cube": { ... },
+    "upload_stl": { ... }
+  };
+}
+主注册流程
+ThreeJSBlocks.ts 文件负责：
+
+创建工具箱类别
+引入各个模块的块定义
+将块分配到对应的类别
+注册所有块到 Blockly 系统
+
+typescript// src-ui/blocks/ThreeJSBlocks.ts
+export function registerThreeJSBlocks(codeGenerator: any, addToolboxCategory: any) {
+  // 创建工具箱类别
+  const modelCategory = addToolboxCategory("3D Model");
+  // ... 其他类别
+  
+  // 获取各模块块定义
+  const modelBlocks = getModelBlockDefinitions(codeGenerator);
+  // ... 其他模块
+  
+  // 合并所有块定义
+  const blockDefinitions = {
+    ...modelBlocks,
+    // ... 其他模块
+  };
+  
+  // 设置块类别
+  blockDefinitions["load_stl"].category = modelCategory;
+  // ... 其他块
+  
+  // 注册所有块
+  Object.entries(blockDefinitions).forEach(
+    ([blockId, { category, definition, generator }]) => {
+      if (category) {
+        Blockly.Blocks[blockId] = definition;
+        codeGenerator[blockId] = generator;
+        category.contents.push({ kind: "block", type: blockId });
+      }
+    }
+  );
+}
+支持的功能块
+3D 模型块
+
+加载 STL 文件
+上传 STL 文件
+创建立方体
+
+变换块
+
+旋转模型
+缩放模型
+平移模型
+
+可视化块
+
+在 3D 查看器中显示
+清除场景
+
+编程逻辑块
+
+变量声明和获取
+数字和数学运算
+比较操作
+for 循环
+if 条件语句
+
+线框网格块
+
+生成线框网格
+导出线框 CSV
+各种线框组件操作
+
+层叠激光切割块
+
+生成层叠图层
+导出层叠 SVG
+
+扩展指南
+如果需要添加新的块类别或类型，请按照以下步骤：
+
+创建新的块定义文件，如 NewFeatureBlockDefinitions.ts
+实现 getNewFeatureBlockDefinitions 函数，返回新块的定义
+在 ThreeJSBlocks.ts 中：
+
+导入新模块
+创建相应的工具箱类别
+获取新模块的块定义
+设置块类别
+块定义会自动被注册
+
+
+
+开发注意事项
+
+所有块定义文件应遵循相同的结构，以保持一致性
+每个块的 category 属性初始设置为 null，在 ThreeJSBlocks.ts 中统一分配
+使用 Command 对象来表示块的执行操作
+确保每个块都有适当的前置和后置连接点配置
+添加有意义的提示信息，帮助用户理解块的功能
+
+后续计划
+
+添加更多的 3D 模型类型
+改进线框网格生成算法
+优化层叠激光切割功能
+添加更多的变换和编辑操作
+实现模型的导入/导出功能
