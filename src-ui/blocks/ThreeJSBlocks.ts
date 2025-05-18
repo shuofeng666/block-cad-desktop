@@ -1,4 +1,4 @@
-// src-ui/blocks/ThreeJSBlocks.ts
+// src-ui/blocks/ThreeJSBlocks.ts (修改版)
 import * as Blockly from "blockly";
 import { scope } from "../core/Scope";
 import { Command } from "../core/Scope";
@@ -14,7 +14,7 @@ export function registerThreeJSBlocks(
   codeGenerator: any,
   addToolboxCategory: any
 ) {
-  // 注册工具箱类别
+  // 注册工具箱类别 - 类别会在 addToolboxCategory 中自动分配颜色
   const modelCategory = addToolboxCategory("3D Model");
   const wireMeshCategory = addToolboxCategory("Wire Mesh");
   const visualizationCategory = addToolboxCategory("Visualization");
@@ -37,60 +37,70 @@ export function registerThreeJSBlocks(
     ...visualizationBlocks,
     ...programmingBlocks,
     ...transformBlocks,
-
     ...modelBlocks,
   };
 
-  blockDefinitions["generate_wire_mesh"].category = wireMeshCategory;
-  blockDefinitions["export_wire_csv"].category = wireMeshCategory;
-  blockDefinitions["initialize_wire_mesh"].category =
-    wireMeshComponentsCategory;
-  blockDefinitions["add_horizontal_wire"].category = wireMeshComponentsCategory;
-  blockDefinitions["add_vertical_wire"].category = wireMeshComponentsCategory;
-  blockDefinitions["convert_to_tubes"].category = wireMeshComponentsCategory;
-  blockDefinitions["collect_wire_mesh"].category = wireMeshComponentsCategory;
-  blockDefinitions["export_component_wire_csv"].category =
-    wireMeshComponentsCategory;
+  // 设置类别和颜色
+  function setBlockCategoryAndColor(blockId, category) {
+    if (blockDefinitions[blockId]) {
+      blockDefinitions[blockId].category = category;
+      
+      // 修改块的定义，添加颜色设置
+      const originalInit = blockDefinitions[blockId].definition.init;
+      blockDefinitions[blockId].definition.init = function() {
+        originalInit.call(this);
+        this.setColour(category.colour);
+      };
+    }
+  }
 
-  // 设置 Stacked Layers 块的类别
-  blockDefinitions["generate_stacked_layers"].category = stackedLayersCategory;
-  blockDefinitions["export_stacked_layers_svg"].category =
-    stackedLayersCategory;
+  // 为每个块设置类别和颜色
+  // Wire Mesh 类别
+  setBlockCategoryAndColor("generate_wire_mesh", wireMeshCategory);
+  setBlockCategoryAndColor("export_wire_csv", wireMeshCategory);
+  
+  // Wire Mesh Components 类别
+  setBlockCategoryAndColor("initialize_wire_mesh", wireMeshComponentsCategory);
+  setBlockCategoryAndColor("add_horizontal_wire", wireMeshComponentsCategory);
+  setBlockCategoryAndColor("add_vertical_wire", wireMeshComponentsCategory);
+  setBlockCategoryAndColor("convert_to_tubes", wireMeshComponentsCategory);
+  setBlockCategoryAndColor("collect_wire_mesh", wireMeshComponentsCategory);
+  setBlockCategoryAndColor("export_component_wire_csv", wireMeshComponentsCategory);
 
-  // 设置 Visualization 块的类别
-  blockDefinitions["show_in_viewer"].category = visualizationCategory;
-  blockDefinitions["clear_scene"].category = visualizationCategory;
+  // Stacked Layers 类别
+  setBlockCategoryAndColor("generate_stacked_layers", stackedLayersCategory);
+  setBlockCategoryAndColor("export_stacked_layers_svg", stackedLayersCategory);
 
-  // Programming 类别设置
-  blockDefinitions["variable_declaration"].category = logicCategory;
-  blockDefinitions["for_loop"].category = logicCategory;
-  blockDefinitions["if_statement"].category = logicCategory;
-  blockDefinitions["number"].category = logicCategory;
-  blockDefinitions["math_operation"].category = logicCategory;
-  blockDefinitions["comparison"].category = logicCategory;
-  blockDefinitions["variable_get"].category = logicCategory;
+  // Visualization 类别
+  setBlockCategoryAndColor("show_in_viewer", visualizationCategory);
+  setBlockCategoryAndColor("clear_scene", visualizationCategory);
 
-  // Transform 类别设置
-  blockDefinitions["rotate_model"].category = transformCategory;
-  blockDefinitions["scale_model"].category = transformCategory;
-  blockDefinitions["translate_model"].category = transformCategory;
+  // Programming 类别
+  setBlockCategoryAndColor("variable_declaration", logicCategory);
+  setBlockCategoryAndColor("for_loop", logicCategory);
+  setBlockCategoryAndColor("if_statement", logicCategory);
+  setBlockCategoryAndColor("number", logicCategory);
+  setBlockCategoryAndColor("math_operation", logicCategory);
+  setBlockCategoryAndColor("comparison", logicCategory);
+  setBlockCategoryAndColor("variable_get", logicCategory);
 
-    // Model 类别设置
-  blockDefinitions["load_stl"].category = modelCategory;
-  blockDefinitions["create_cube"].category = modelCategory;
-  blockDefinitions["upload_stl"].category = modelCategory;
+  // Transform 类别
+  setBlockCategoryAndColor("rotate_model", transformCategory);
+  setBlockCategoryAndColor("scale_model", transformCategory);
+  setBlockCategoryAndColor("translate_model", transformCategory);
 
+  // Model 类别
+  setBlockCategoryAndColor("load_stl", modelCategory);
+  setBlockCategoryAndColor("create_cube", modelCategory);
+  setBlockCategoryAndColor("upload_stl", modelCategory);
 
   // 注册所有块
   Object.entries(blockDefinitions).forEach(
     ([blockId, { category, definition, generator }]) => {
-      // 添加 null 检查
       if (category) {
-        console.log(`注册块: ${blockId} 到类别: ${category.name}`);
+        console.log(`注册块: ${blockId} 到类别: ${category.name}, 颜色: ${category.colour}`);
         Blockly.Blocks[blockId] = definition;
         codeGenerator[blockId] = generator;
-
-        // 添加到工具箱
         category.contents.push({ kind: "block", type: blockId });
       } else {
         console.warn(`警告: 块 ${blockId} 没有设置类别`);
