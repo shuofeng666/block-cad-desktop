@@ -16,12 +16,11 @@ export function registerThreeJSBlocks(
 ) {
   // 注册工具箱类别 - 类别会在 addToolboxCategory 中自动分配颜色
   const modelCategory = addToolboxCategory("3D Model");
-  const wireMeshCategory = addToolboxCategory("Wire Mesh");
   const visualizationCategory = addToolboxCategory("Visualization");
   const transformCategory = addToolboxCategory("Transforms");
   const logicCategory = addToolboxCategory("Programming");
-  const wireMeshComponentsCategory = addToolboxCategory("Wire Mesh Components");
   const stackedLayersCategory = addToolboxCategory("Stacked Layers");
+  const wireMeshCategory = addToolboxCategory("Wire Mesh");
 
   const wireMeshBlocks = getWireMeshBlockDefinitions(codeGenerator);
   const stackedLayersBlocks = getStackedLayersBlockDefinitions(codeGenerator);
@@ -59,13 +58,13 @@ export function registerThreeJSBlocks(
   setBlockCategoryAndColor("generate_wire_mesh", wireMeshCategory);
   setBlockCategoryAndColor("export_wire_csv", wireMeshCategory);
   
-  // Wire Mesh Components 类别
-  setBlockCategoryAndColor("initialize_wire_mesh", wireMeshComponentsCategory);
-  setBlockCategoryAndColor("add_horizontal_wire", wireMeshComponentsCategory);
-  setBlockCategoryAndColor("add_vertical_wire", wireMeshComponentsCategory);
-  setBlockCategoryAndColor("convert_to_tubes", wireMeshComponentsCategory);
-  setBlockCategoryAndColor("collect_wire_mesh", wireMeshComponentsCategory);
-  setBlockCategoryAndColor("export_component_wire_csv", wireMeshComponentsCategory);
+  // Wire Mesh Components 类别 - 现在合并到 Wire Mesh 类别中
+  setBlockCategoryAndColor("initialize_wire_mesh", wireMeshCategory);
+  setBlockCategoryAndColor("add_horizontal_wire", wireMeshCategory);
+  setBlockCategoryAndColor("add_vertical_wire", wireMeshCategory);
+  setBlockCategoryAndColor("convert_to_tubes", wireMeshCategory);
+  setBlockCategoryAndColor("collect_wire_mesh", wireMeshCategory);
+  setBlockCategoryAndColor("export_component_wire_csv", wireMeshCategory);
 
   // Stacked Layers 类别
   setBlockCategoryAndColor("generate_stacked_layers", stackedLayersCategory);

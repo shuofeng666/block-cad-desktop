@@ -1,5 +1,4 @@
 {
-  
   "Programming": {
     "id": "programming",
     "blocks": {
@@ -57,10 +56,49 @@
       }
     }
   },
-  "Wire Mesh Components": {
-    "id": "wire_mesh_components",
+  "Wire Mesh": {
+    "id": "wire_mesh",
     "blocks": {
-      "initialize_wire_mesh": { "title": "Initialize Wire Mesh", "arg": [] },
+      "generate_wire_mesh": {
+        "title": "Generate Wire Mesh",
+        "isStatementBlock": true,
+        "arg": [
+          {
+            "name": "h_count",
+            "type": "num",
+            "value": "10"
+          },
+          {
+            "name": "v_count",
+            "type": "num",
+            "value": "10"
+          },
+          {
+            "name": "use_tubes",
+            "type": "bool",
+            "value": "false"
+          },
+          {
+            "name": "tube_thickness",
+            "type": "num",
+            "value": "0.5"
+          }
+        ]
+      },
+      "export_wire_csv": {
+        "title": "Export Wire CSV",
+        "arg": [
+          {
+            "name": "filename",
+            "type": "str",
+            "value": "wire_mesh"
+          }
+        ]
+      },
+      "initialize_wire_mesh": { 
+        "title": "Initialize Wire Mesh", 
+        "arg": [] 
+      },
       "add_horizontal_wire": {
         "title": "Add Horizontal Wire",
         "arg": [
@@ -127,47 +165,6 @@
             "name": "radius",
             "type": "num",
             "value": "25"
-          }
-        ]
-      }
-    }
-  },
-  "Wire Mesh": {
-    "id": "wire_mesh",
-    "blocks": {
-      "generate_wire_mesh": {
-        "title": "Generate Wire Mesh",
-        "isStatementBlock": true,
-        "arg": [
-          {
-            "name": "h_count",
-            "type": "num",
-            "value": "10"
-          },
-          {
-            "name": "v_count",
-            "type": "num",
-            "value": "10"
-          },
-          {
-            "name": "use_tubes",
-            "type": "bool",
-            "value": "false"
-          },
-          {
-            "name": "tube_thickness",
-            "type": "num",
-            "value": "0.5"
-          }
-        ]
-      },
-      "export_wire_csv": {
-        "title": "Export Wire CSV",
-        "arg": [
-          {
-            "name": "filename",
-            "type": "str",
-            "value": "wire_mesh"
           }
         ]
       }

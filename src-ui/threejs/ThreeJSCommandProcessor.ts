@@ -41,312 +41,334 @@ export class ThreeJSCommandProcessor {
     );
   }
 
-private async processCommand(cmd: any): Promise<any> {
-  console.log(
-    "[ThreeJSCommandProcessor] Processing command:",
-    cmd.id,
-    cmd.args
-  );
+  private async processCommand(cmd: any): Promise<any> {
+    console.log(
+      "[ThreeJSCommandProcessor] Processing command:",
+      cmd.id,
+      cmd.args
+    );
 
-  try {
+    try {
+      let result = null;
+
+      switch (cmd.id) {
+        // Wire Mesh Components commands
+        case "initialize_wire_mesh":
+          this.initializeWireMesh();
+          result = null;
+          break;
+
+        case "add_horizontal_wire":
+          // Check if position might be a variable name
+          let horizontalPosition = cmd.args.position;
+          if (
+            typeof horizontalPosition === "string" ||
+            horizontalPosition === 0
+          ) {
+            // If this is likely a variable reference
+            const positionVar = scope.context["position"];
+            if (positionVar !== undefined) {
+              horizontalPosition = positionVar;
+              console.log(
+                `[add_horizontal_wire] Using position from variable: ${horizontalPosition}`
+              );
+            }
+          }
+
+          this.addHorizontalWire(
+            horizontalPosition,
+            cmd.args.thickness,
+            cmd.args.color
+          );
+          result = null;
+          break;
+
+        // Override the addVerticalWire handler in processCommand method
+        // In processCommand method, replace the existing add_vertical_wire case with:
+        case "add_vertical_wire":
+          // Check if position might be a variable name
+          let verticalPosition = cmd.args.position;
+          if (typeof verticalPosition === "string" || verticalPosition === 0) {
+            // If this is likely a variable reference
+            const positionVar = scope.context["position"];
+            if (positionVar !== undefined) {
+              verticalPosition = positionVar;
+              console.log(
+                `[add_vertical_wire] Using position from variable: ${verticalPosition}`
+              );
+            }
+          }
+
+          this.addVerticalWire(
+            verticalPosition,
+            cmd.args.thickness,
+            cmd.args.color
+          );
+          result = null;
+          break;
+        case "convert_to_tubes":
+          this.convertToTubes(cmd.args.thickness);
+          result = null;
+          break;
+
+        case "collect_wire_mesh":
+          result = this.collectWireMesh();
+          break;
+
+        // Programming Logic commands
+        case "variable_declaration":
+          result = this.handleVariableDeclaration(cmd);
+          break;
+
+        case "for_loop":
+          result = await this.handleForLoop(cmd);
+          break;
+
+        case "if_statement":
+          result = await this.handleIfStatement(cmd);
+          break;
+
+        // Existing commands
+        case "upload_stl":
+          result = await this.uploadSTL(cmd.args.file);
+          break;
+
+        case "create_cube":
+          result = this.createCube(cmd.args.size);
+          break;
+
+        case "generate_wire_mesh":
+          result = await this.generateWireMesh(cmd);
+          break;
+
+        case "show_in_viewer":
+          result = await this.showInViewer(cmd);
+          break;
+
+        case "clear_scene":
+          result = this.clearScene();
+          break;
+
+        case "export_wire_csv":
+          result = await this.exportWireCSV(cmd);
+          break;
+
+        case "rotate_model":
+          result = this.rotateModel(cmd);
+          break;
+
+        case "scale_model":
+          result = this.scaleModel(cmd);
+          break;
+
+        case "translate_model":
+          result = this.translateModel(cmd);
+          break;
+
+        case "generate_stacked_layers":
+          result = await this.generateStackedLayers(cmd);
+          break;
+
+        case "export_stacked_layers_svg":
+          result = this.exportStackedLayersSVG(cmd);
+          break;
+
+        default:
+          console.warn("[ThreeJSCommandProcessor] Unknown command:", cmd.id);
+          return null;
+      }
+
+      console.log(
+        `[ThreeJSCommandProcessor] Command ${cmd.id} completed with result:`,
+        result
+      );
+      return result;
+    } catch (error) {
+      console.error(
+        "[ThreeJSCommandProcessor] Error processing command:",
+        cmd.id,
+        error
+      );
+      if (error instanceof Error) {
+        console.error("[ThreeJSCommandProcessor] Error stack:", error.stack);
+      }
+      return null;
+    }
+  }
+
+  // Logic command handlers
+  // Improved variable handling for ThreeJSCommandProcessor
+
+  // handleVariableDeclaration method update - this should replace the existing method:
+  private handleVariableDeclaration(cmd: any): null {
+    const { varName, value } = cmd.args;
+
+    // Try to parse the value as a number or expression
+    let parsedValue;
+
+    try {
+      // First check if it's a simple number value
+      parsedValue = parseFloat(value);
+
+      // If it's NaN, try evaluating it as an expression
+      if (isNaN(parsedValue)) {
+        // Handle simple expressions with variables
+        if (
+          value.includes("+") ||
+          value.includes("-") ||
+          value.includes("*") ||
+          value.includes("/")
+        ) {
+          // Replace variable names with their values
+          let processedExpression = value;
+          for (const key in scope.context) {
+            if (processedExpression.includes(key)) {
+              processedExpression = processedExpression.replace(
+                new RegExp(key, "g"),
+                scope.context[key]
+              );
+            }
+          }
+
+          // Evaluate the expression
+          parsedValue = eval(processedExpression);
+        } else {
+          // Not a number or expression, use as string
+          parsedValue = value;
+        }
+      }
+    } catch (e) {
+      console.error(
+        `[handleVariableDeclaration] Error parsing value: ${value}`,
+        e
+      );
+      parsedValue = value; // Use original value on error
+    }
+
+    // Store the variable in the scope context
+    scope.setVar(varName, parsedValue);
+    console.log(
+      `[handleVariableDeclaration] Set variable ${varName} = ${parsedValue} (original value: ${value})`
+    );
+
+    return null;
+  }
+
+  // forLoop method update - this should replace the existing method:
+  private async handleForLoop(cmd: any): Promise<any> {
+    const { varName, from, to, step } = cmd.args;
     let result = null;
 
-    switch (cmd.id) {
-      // Wire Mesh Components commands
-      case "initialize_wire_mesh":
-        this.initializeWireMesh();
-        result = null;
-        break;
+    console.log(
+      `[handleForLoop] Starting loop: ${varName} from ${from} to ${to} step ${step}`
+    );
 
-case "add_horizontal_wire":
-  // Check if position might be a variable name
-  let horizontalPosition = cmd.args.position;
-  if (typeof horizontalPosition === 'string' || horizontalPosition === 0) {
-    // If this is likely a variable reference
-    const positionVar = scope.context["position"];
-    if (positionVar !== undefined) {
-      horizontalPosition = positionVar;
-      console.log(`[add_horizontal_wire] Using position from variable: ${horizontalPosition}`);
+    // Execute the loop
+    for (let i = from; i < to; i += step) {
+      // Set the loop variable for each iteration
+      scope.setVar(varName, i);
+      console.log(`[handleForLoop] Iteration ${varName} = ${i}`);
+
+      // Execute all child commands
+      if (cmd.children && cmd.children.length > 0) {
+        for (const child of cmd.children) {
+          const childResult = await this.processCommand(child);
+          if (childResult !== null) {
+            result = childResult;
+          }
+        }
+      }
     }
+
+    return result;
   }
-  
-  this.addHorizontalWire(
-    horizontalPosition,
-    cmd.args.thickness,
-    cmd.args.color
-  );
-  result = null;
-  break;
 
-// Override the addVerticalWire handler in processCommand method
-// In processCommand method, replace the existing add_vertical_wire case with:
-case "add_vertical_wire":
-  // Check if position might be a variable name
-  let verticalPosition = cmd.args.position;
-  if (typeof verticalPosition === 'string' || verticalPosition === 0) {
-    // If this is likely a variable reference
-    const positionVar = scope.context["position"];
-    if (positionVar !== undefined) {
-      verticalPosition = positionVar;
-      console.log(`[add_vertical_wire] Using position from variable: ${verticalPosition}`);
-    }
-  }
-  
-  this.addVerticalWire(
-    verticalPosition,
-    cmd.args.thickness,
-    cmd.args.color
-  );
-  result = null;
-  break;
-      case "convert_to_tubes":
-        this.convertToTubes(cmd.args.thickness);
-        result = null;
-        break;
+  private async handleIfStatement(cmd: any): Promise<any> {
+    const { condition } = cmd.args;
 
-      case "collect_wire_mesh":
-        result = this.collectWireMesh();
-        break;
-
-      // Programming Logic commands
-      case "variable_declaration":
-        result = this.handleVariableDeclaration(cmd);
-        break;
-
-      case "for_loop":
-        result = await this.handleForLoop(cmd);
-        break;
-
-      case "if_statement":
-        result = await this.handleIfStatement(cmd);
-        break;
-
-      // Existing commands
-      case "upload_stl":
-        result = await this.uploadSTL(cmd.args.file);
-        break;
-
-      case "create_cube":
-        result = this.createCube(cmd.args.size);
-        break;
-
-      case "generate_wire_mesh":
-        result = await this.generateWireMesh(cmd);
-        break;
-
-      case "show_in_viewer":
-        result = await this.showInViewer(cmd);
-        break;
-
-      case "clear_scene":
-        result = this.clearScene();
-        break;
-
-      case "export_wire_csv":
-        result = await this.exportWireCSV(cmd);
-        break;
-
-      case "rotate_model":
-        result = this.rotateModel(cmd);
-        break;
-
-      case "scale_model":
-        result = this.scaleModel(cmd);
-        break;
-
-      case "translate_model":
-        result = this.translateModel(cmd);
-        break;
-
-      case "generate_stacked_layers":
-        result = await this.generateStackedLayers(cmd);
-        break;
-
-      case "export_stacked_layers_svg":
-        result = this.exportStackedLayersSVG(cmd);
-        break;
-
-      default:
-        console.warn("[ThreeJSCommandProcessor] Unknown command:", cmd.id);
-        return null;
+    // Evaluate the condition
+    let conditionMet = false;
+    try {
+      // This is a simplified approach - in a real environment,
+      // you would need a more robust way to evaluate expressions
+      conditionMet = eval(condition);
+    } catch (e) {
+      console.error(
+        `[handleIfStatement] Error evaluating condition: ${condition}`,
+        e
+      );
+      return null;
     }
 
     console.log(
-      `[ThreeJSCommandProcessor] Command ${cmd.id} completed with result:`,
-      result
+      `[handleIfStatement] Condition: ${condition}, Result: ${conditionMet}`
     );
-    return result;
-  } catch (error) {
-    console.error(
-      "[ThreeJSCommandProcessor] Error processing command:",
-      cmd.id,
-      error
-    );
-    if (error instanceof Error) {
-      console.error("[ThreeJSCommandProcessor] Error stack:", error.stack);
-    }
-    return null;
-  }
-}
 
-// Logic command handlers
-// Improved variable handling for ThreeJSCommandProcessor
+    if (conditionMet) {
+      let result = null;
 
-// handleVariableDeclaration method update - this should replace the existing method:
-private handleVariableDeclaration(cmd: any): null {
-  const { varName, value } = cmd.args;
-  
-  // Try to parse the value as a number or expression
-  let parsedValue;
-  
-  try {
-    // First check if it's a simple number value
-    parsedValue = parseFloat(value);
-    
-    // If it's NaN, try evaluating it as an expression
-    if (isNaN(parsedValue)) {
-      // Handle simple expressions with variables
-      if (value.includes("+") || value.includes("-") || 
-          value.includes("*") || value.includes("/")) {
-        
-        // Replace variable names with their values
-        let processedExpression = value;
-        for (const key in scope.context) {
-          if (processedExpression.includes(key)) {
-            processedExpression = processedExpression.replace(
-              new RegExp(key, 'g'), 
-              scope.context[key]
-            );
+      // Execute all child commands
+      if (cmd.children && cmd.children.length > 0) {
+        for (const child of cmd.children) {
+          const childResult = await this.processCommand(child);
+          if (childResult !== null) {
+            result = childResult;
           }
         }
-        
-        // Evaluate the expression
-        parsedValue = eval(processedExpression);
-      } else {
-        // Not a number or expression, use as string
-        parsedValue = value;
       }
-    }
-  } catch (e) {
-    console.error(`[handleVariableDeclaration] Error parsing value: ${value}`, e);
-    parsedValue = value; // Use original value on error
-  }
-  
-  // Store the variable in the scope context
-  scope.setVar(varName, parsedValue);
-  console.log(`[handleVariableDeclaration] Set variable ${varName} = ${parsedValue} (original value: ${value})`);
-  
-  return null;
-}
 
-// forLoop method update - this should replace the existing method:
-private async handleForLoop(cmd: any): Promise<any> {
-  const { varName, from, to, step } = cmd.args;
-  let result = null;
-  
-  console.log(`[handleForLoop] Starting loop: ${varName} from ${from} to ${to} step ${step}`);
-  
-  // Execute the loop
-  for (let i = from; i < to; i += step) {
-    // Set the loop variable for each iteration
-    scope.setVar(varName, i);
-    console.log(`[handleForLoop] Iteration ${varName} = ${i}`);
-    
-    // Execute all child commands
-    if (cmd.children && cmd.children.length > 0) {
-      for (const child of cmd.children) {
-        const childResult = await this.processCommand(child);
-        if (childResult !== null) {
-          result = childResult;
-        }
-      }
+      return result;
     }
-  }
-  
-  return result;
-}
 
-private async handleIfStatement(cmd: any): Promise<any> {
-  const { condition } = cmd.args;
-  
-  // Evaluate the condition
-  let conditionMet = false;
-  try {
-    // This is a simplified approach - in a real environment,
-    // you would need a more robust way to evaluate expressions
-    conditionMet = eval(condition);
-  } catch (e) {
-    console.error(`[handleIfStatement] Error evaluating condition: ${condition}`, e);
     return null;
   }
-  
-  console.log(`[handleIfStatement] Condition: ${condition}, Result: ${conditionMet}`);
-  
-  if (conditionMet) {
-    let result = null;
-    
-    // Execute all child commands
-    if (cmd.children && cmd.children.length > 0) {
-      for (const child of cmd.children) {
-        const childResult = await this.processCommand(child);
-        if (childResult !== null) {
-          result = childResult;
-        }
-      }
-    }
-    
-    return result;
-  }
-  
-  return null;
-}
 
   /**
    * 生成层叠切片
    * @param cmd 命令参数
    */
-private async generateStackedLayers(cmd: any): Promise<string> {
-  // 获取参数
-  const materialThickness = cmd.args.materialThickness || 3;
-  // 不再从命令参数中获取层数
-  
-  // 处理子命令获取模型
-  let objectId = scope.context["_currentObjectId"];
-  if (cmd.children && cmd.children.length > 0) {
-    for (const child of cmd.children) {
-      const result = await this.processCommand(child);
-      if (result) objectId = result;
+  private async generateStackedLayers(cmd: any): Promise<string> {
+    // 获取参数
+    const materialThickness = cmd.args.materialThickness || 3;
+    // 不再从命令参数中获取层数
+
+    // 处理子命令获取模型
+    let objectId = scope.context["_currentObjectId"];
+    if (cmd.children && cmd.children.length > 0) {
+      for (const child of cmd.children) {
+        const result = await this.processCommand(child);
+        if (result) objectId = result;
+      }
     }
+
+    if (!objectId) {
+      console.error("[generateStackedLayers] No object ID found");
+      return null;
+    }
+
+    // 记录原始模型ID，用于后续变换后重新生成层叠切片
+    this.originalModelId = objectId;
+
+    // 启用层叠模式标志
+    this.isStackedLayersMode = true;
+
+    // 先清除之前的层
+    this.removeStackedLayers();
+
+    // 存储材料厚度参数，用于后续变换后重新生成
+    scope.setVar("_stackedLayersMaterialThickness", materialThickness);
+
+    // 生成层叠切片
+    const stackedLayersId = await this.generateStackedLayersFromObject(
+      objectId,
+      materialThickness
+    );
+
+    // 显示控制面板
+    this.showStackedLayersControls(materialThickness);
+
+    return stackedLayersId;
   }
-
-  if (!objectId) {
-    console.error("[generateStackedLayers] No object ID found");
-    return null;
-  }
-
-  // 记录原始模型ID，用于后续变换后重新生成层叠切片
-  this.originalModelId = objectId;
-
-  // 启用层叠模式标志
-  this.isStackedLayersMode = true;
-
-  // 先清除之前的层
-  this.removeStackedLayers();
-
-  // 存储材料厚度参数，用于后续变换后重新生成
-  scope.setVar("_stackedLayersMaterialThickness", materialThickness);
-  
-  // 生成层叠切片
-  const stackedLayersId = await this.generateStackedLayersFromObject(
-    objectId,
-    materialThickness
-  );
-
-  // 显示控制面板
-  this.showStackedLayersControls(materialThickness);
-
-  return stackedLayersId;
-}
 
   private removeStackedLayers(): void {
     // 从场景中移除层
@@ -368,52 +390,57 @@ private async generateStackedLayers(cmd: any): Promise<string> {
   /**
    * 从对象ID生成层叠切片
    */
-private async generateStackedLayersFromObject(
-  objectId: string,
-  materialThickness: number
-): Promise<string> {
-  console.log(
-    "[generateStackedLayersFromObject] Starting with object ID:",
-    objectId
-  );
+  private async generateStackedLayersFromObject(
+    objectId: string,
+    materialThickness: number
+  ): Promise<string> {
+    console.log(
+      "[generateStackedLayersFromObject] Starting with object ID:",
+      objectId
+    );
 
-  const obj = this.currentObjects.get(objectId);
-  if (!obj || !(obj instanceof THREE.Mesh)) {
-    console.error("[generateStackedLayersFromObject] No valid mesh found");
-    return null;
-  }
+    const obj = this.currentObjects.get(objectId);
+    if (!obj || !(obj instanceof THREE.Mesh)) {
+      console.error("[generateStackedLayersFromObject] No valid mesh found");
+      return null;
+    }
 
-  // 计算边界框和尺寸
-  const boundingBox = new THREE.Box3().setFromObject(obj);
-  const size = boundingBox.getSize(new THREE.Vector3());
+    // 计算边界框和尺寸
+    const boundingBox = new THREE.Box3().setFromObject(obj);
+    const size = boundingBox.getSize(new THREE.Vector3());
 
-  // 存储模型尺寸
-  this.modelDimensions = {
-    width: size.x,
-    height: size.y,
-    depth: size.z,
-  };
+    // 存储模型尺寸
+    this.modelDimensions = {
+      width: size.x,
+      height: size.y,
+      depth: size.z,
+    };
 
-  console.log(
-    "[generateStackedLayersFromObject] Model dimensions:",
-    this.modelDimensions
-  );
+    console.log(
+      "[generateStackedLayersFromObject] Model dimensions:",
+      this.modelDimensions
+    );
 
-  // 清除之前的层数据
-  this.stackedShapes = [];
-  
-  // 自动计算合适的层数
-  // 层数 = 模型高度 / 材料厚度
-  // 至少要有3层，最多50层
-  const layerCount = Math.max(3, Math.min(50, Math.floor(size.y / materialThickness)));
-  
-  // 存储计算出的层数
-  scope.setVar("_stackedLayersCount", layerCount);
-  
-  console.log(`[generateStackedLayersFromObject] Auto calculated layer count: ${layerCount}`);
+    // 清除之前的层数据
+    this.stackedShapes = [];
 
-  // 计算层间距
-  const layerSpacing = size.y / layerCount;
+    // 自动计算合适的层数
+    // 层数 = 模型高度 / 材料厚度
+    // 至少要有3层，最多50层
+    const layerCount = Math.max(
+      3,
+      Math.min(50, Math.floor(size.y / materialThickness))
+    );
+
+    // 存储计算出的层数
+    scope.setVar("_stackedLayersCount", layerCount);
+
+    console.log(
+      `[generateStackedLayersFromObject] Auto calculated layer count: ${layerCount}`
+    );
+
+    // 计算层间距
+    const layerSpacing = size.y / layerCount;
 
     // 生成每一层
     for (let i = 0; i < layerCount; i++) {
@@ -509,13 +536,6 @@ private async generateStackedLayersFromObject(
     return stackedLayersId;
   }
 
-
-
-
-
-
-
-
   private async regenerateStackedLayers(): Promise<void> {
     // 获取材料厚度和层数
     const materialThickness =
@@ -587,62 +607,62 @@ private async generateStackedLayersFromObject(
    * @param materialThickness 材料厚度
    * @param layerCount 层数
    */
-private showStackedLayersControls(materialThickness: number): void {
-  if (!this.controlPanel) {
-    console.warn("[showStackedLayersControls] Control panel not available");
-    return;
+  private showStackedLayersControls(materialThickness: number): void {
+    if (!this.controlPanel) {
+      console.warn("[showStackedLayersControls] Control panel not available");
+      return;
+    }
+
+    // 清除当前控制面板
+    this.controlPanel.clear();
+
+    // 设置新的控制面板
+    this.controlPanel.setCommand(
+      "stacked_layers_controls",
+      "Stacked Layers Controls"
+    );
+
+    // 添加材料厚度控制
+    this.controlPanel.addControl({
+      id: "materialThickness",
+      type: "slider",
+      label: "Material Thickness (mm)",
+      min: 1,
+      max: 5,
+      step: 0.5,
+      value: materialThickness,
+      onChange: (value) => this.onMaterialThicknessChange(value as number),
+    });
+
+    // 添加显示/隐藏原始模型选项
+    this.controlPanel.addControl({
+      id: "showOriginalModel",
+      type: "checkbox",
+      label: "Show Original Model",
+      value: false, // 默认不显示原始模型
+      onChange: (value) => this.onShowOriginalModelChange(value as boolean),
+    });
+
+    // 添加重新生成按钮控件
+    this.controlPanel.addControl({
+      id: "regenerate",
+      type: "slider",
+      label: "Regenerate Layers",
+      min: 0,
+      max: 1,
+      step: 1,
+      value: 0,
+      onChange: (value) => {
+        if (value === 1) {
+          this.regenerateStackedLayers();
+          // 重置滑块
+          setTimeout(() => {
+            this.controlPanel.updateControl("regenerate", 0);
+          }, 500);
+        }
+      },
+    });
   }
-
-  // 清除当前控制面板
-  this.controlPanel.clear();
-
-  // 设置新的控制面板
-  this.controlPanel.setCommand(
-    "stacked_layers_controls",
-    "Stacked Layers Controls"
-  );
-
-  // 添加材料厚度控制
-  this.controlPanel.addControl({
-    id: "materialThickness",
-    type: "slider",
-    label: "Material Thickness (mm)",
-    min: 1,
-    max: 5,
-    step: 0.5,
-    value: materialThickness,
-    onChange: (value) => this.onMaterialThicknessChange(value as number),
-  });
-
-  // 添加显示/隐藏原始模型选项
-  this.controlPanel.addControl({
-    id: "showOriginalModel",
-    type: "checkbox",
-    label: "Show Original Model",
-    value: false, // 默认不显示原始模型
-    onChange: (value) => this.onShowOriginalModelChange(value as boolean),
-  });
-
-  // 添加重新生成按钮控件
-  this.controlPanel.addControl({
-    id: "regenerate",
-    type: "slider",
-    label: "Regenerate Layers",
-    min: 0,
-    max: 1,
-    step: 1,
-    value: 0,
-    onChange: (value) => {
-      if (value === 1) {
-        this.regenerateStackedLayers();
-        // 重置滑块
-        setTimeout(() => {
-          this.controlPanel.updateControl("regenerate", 0);
-        }, 500);
-      }
-    },
-  });
-}
   /**
    * 处理显示/隐藏原始模型选项
    * @param show 是否显示原始模型
@@ -670,15 +690,15 @@ private showStackedLayersControls(materialThickness: number): void {
    * 处理材料厚度变化
    * @param value 新的厚度值
    */
-private onMaterialThicknessChange(value: number): void {
-  console.log(`[onMaterialThicknessChange] Value changed to: ${value}`);
+  private onMaterialThicknessChange(value: number): void {
+    console.log(`[onMaterialThicknessChange] Value changed to: ${value}`);
 
-  // 更新存储的材料厚度
-  scope.setVar("_stackedLayersMaterialThickness", value);
+    // 更新存储的材料厚度
+    scope.setVar("_stackedLayersMaterialThickness", value);
 
-  // 立即触发重新生成
-  this.debounceRegenerateStackedLayers();
-}
+    // 立即触发重新生成
+    this.debounceRegenerateStackedLayers();
+  }
 
   /**
    * 处理层数变化
@@ -942,7 +962,6 @@ private onMaterialThicknessChange(value: number): void {
     // 如果处于层叠模式，变换后重新生成层叠切片
     if (this.isStackedLayersMode && this.originalModelId) {
       this.debounceRegenerateStackedLayers();
-      
     }
 
     return objectId;
@@ -1016,9 +1035,9 @@ private onMaterialThicknessChange(value: number): void {
     );
 
     // 添加这段代码：如果处于层叠模式，重新生成层叠切片
-  if (this.isStackedLayersMode && this.originalModelId) {
-    this.debounceRegenerateStackedLayers();
-  }
+    if (this.isStackedLayersMode && this.originalModelId) {
+      this.debounceRegenerateStackedLayers();
+    }
   }
 
   /**
@@ -1108,9 +1127,9 @@ private onMaterialThicknessChange(value: number): void {
       `[onScaleValueChange] Applied new scale. Previous: ${currentScaleX}, New: ${value}`
     );
 
-      if (this.isStackedLayersMode && this.originalModelId) {
-    this.debounceRegenerateStackedLayers();
-  }
+    if (this.isStackedLayersMode && this.originalModelId) {
+      this.debounceRegenerateStackedLayers();
+    }
   }
 
   /**
@@ -2092,19 +2111,19 @@ private onMaterialThicknessChange(value: number): void {
       throw new Error("Wire mesh data is not in the expected format.");
     }
   }
- private addTrianglePlaneIntersections(
-    a: THREE.Vector3, 
-    b: THREE.Vector3, 
-    c: THREE.Vector3, 
-    plane: THREE.Plane, 
+  private addTrianglePlaneIntersections(
+    a: THREE.Vector3,
+    b: THREE.Vector3,
+    c: THREE.Vector3,
+    plane: THREE.Plane,
     points: THREE.Vector3[]
   ): void {
     const line1 = new THREE.Line3(a, b);
     const line2 = new THREE.Line3(b, c);
     const line3 = new THREE.Line3(c, a);
-    
+
     const target = new THREE.Vector3();
-    
+
     if (plane.intersectLine(line1, target)) points.push(target.clone());
     if (plane.intersectLine(line2, target)) points.push(target.clone());
     if (plane.intersectLine(line3, target)) points.push(target.clone());
