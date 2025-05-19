@@ -97,10 +97,19 @@ grid.receiveShadow = true;
     this.renderer.setSize(pos.width, pos.height);
   }
 
-  animate() {
-    requestAnimationFrame(this.animate.bind(this));
-    this.renderer.render(this.scene, this.camera);
+  commandProcessor: any = null;
+
+animate() {
+  requestAnimationFrame(this.animate.bind(this));
+  
+  // 添加这一行
+  if (this.commandProcessor) {
+    this.commandProcessor.checkStateUpdates();
   }
+  
+  this.orbitControl.update();
+  this.renderer.render(this.scene, this.camera);
+}
 
   clearScene() {
     // 清理 group 中的所有对象

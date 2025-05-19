@@ -25,24 +25,32 @@ export class ThreeJSCommandProcessor {
   private programmingCommands: ProgrammingCommands;
   private visualizationCommands: VisualizationCommands;
 
-  constructor(glViewer: any, controlPanel?: ControlPanel) {
-    this.glViewer = glViewer;
-    this.scene = glViewer.scene;
-    this.controlPanel = controlPanel;
+  
 
-    // 初始化各功能模块
-    this.modelCommands = new ModelCommands(this);
-    this.transformCommands = new TransformCommands(this);
-    this.wireMeshCommands = new WireMeshCommands(this);
-    this.stackedLayersCommands = new StackedLayersCommands(this);
-    this.programmingCommands = new ProgrammingCommands(this);
-    this.visualizationCommands = new VisualizationCommands(this);
+constructor(glViewer: any, controlPanel?: ControlPanel) {
+  this.glViewer = glViewer;
+  this.scene = glViewer.scene;
+  this.controlPanel = controlPanel;
 
-    console.log(
-      "[ThreeJSCommandProcessor] Initialized with controlPanel:",
-      !!controlPanel
-    );
+  // 初始化各功能模块
+  this.modelCommands = new ModelCommands(this);
+  this.transformCommands = new TransformCommands(this);
+  this.wireMeshCommands = new WireMeshCommands(this);
+  this.stackedLayersCommands = new StackedLayersCommands(this);
+  this.programmingCommands = new ProgrammingCommands(this);
+  this.visualizationCommands = new VisualizationCommands(this);
+  
+  // 将处理器引用传递给 GLViewer，以便它可以在合适的时间调用 checkStateUpdates
+  if (glViewer) {
+    glViewer.commandProcessor = this;
+    console.log("[ThreeJSCommandProcessor] 已将处理器引用传递给 GLViewer");
   }
+
+  console.log(
+    "[ThreeJSCommandProcessor] 初始化完成，控制面板:",
+    !!controlPanel
+  );
+}
 
   // 共享访问器方法
   getScene(): THREE.Scene {
@@ -73,100 +81,108 @@ export class ThreeJSCommandProcessor {
     this.currentSceneObject = object;
   }
 
-  // 主命令处理方法
-  public async processCommand(cmd: any): Promise<any> {
-    console.log(
-      "[ThreeJSCommandProcessor] Processing command:",
-      cmd.id,
-      cmd.args
-    );
-
-    try {
-      // 根据命令类型分发到相应的处理模块
-      switch (cmd.id) {
-        // 模型命令
-        case "upload_stl":
-          return await this.modelCommands.uploadSTL(cmd.args.file);
-        case "create_cube":
-          return this.modelCommands.createCube(cmd.args.size);
-          
-        // 变换命令
-        case "rotate_model":
-          return this.transformCommands.rotateModel(cmd);
-        case "scale_model":
-          return this.transformCommands.scaleModel(cmd);
-        case "translate_model":
-          return this.transformCommands.translateModel(cmd);
-          
-        // 线框网格命令
-        case "initialize_wire_mesh":
-          return this.wireMeshCommands.initializeWireMesh();
-        case "add_horizontal_wire":
-          return this.wireMeshCommands.addHorizontalWire(
-            cmd.args.position,
-            cmd.args.thickness,
-            cmd.args.color
-          );
-        case "add_vertical_wire":
-          return this.wireMeshCommands.addVerticalWire(
-            cmd.args.position,
-            cmd.args.thickness,
-            cmd.args.color
-          );
-        case "convert_to_tubes":
-          return this.wireMeshCommands.convertToTubes(cmd.args.thickness);
-        case "collect_wire_mesh":
-          return this.wireMeshCommands.collectWireMesh();
-        case "generate_wire_mesh":
-          return await this.wireMeshCommands.generateWireMesh(cmd);
-        case "export_wire_csv":
-          return await this.wireMeshCommands.exportWireCSV(cmd);
-          
-        // 层叠切片命令
-        case "generate_stacked_layers":
-          return await this.stackedLayersCommands.generateStackedLayers(cmd);
-        case "export_stacked_layers_svg":
-          return this.stackedLayersCommands.exportStackedLayersSVG(cmd);
-          
-        // 编程逻辑命令
-        case "variable_declaration":
-          return this.programmingCommands.handleVariableDeclaration(cmd);
-        case "for_loop":
-          return await this.programmingCommands.handleForLoop(cmd);
-        case "if_statement":
-          return await this.programmingCommands.handleIfStatement(cmd);
-          
-        // 可视化命令
-        case "show_in_viewer":
-          return await this.visualizationCommands.showInViewer(cmd);
-        case "clear_scene":
-          return this.visualizationCommands.clearScene();
-          
-        default:
-          console.warn("[ThreeJSCommandProcessor] Unknown command:", cmd.id);
-          return null;
-      }
-    } catch (error) {
-      console.error(
-        "[ThreeJSCommandProcessor] Error processing command:",
-        cmd.id,
-        error
-      );
-      return null;
-    }
-  }
-// 添加到 ThreeJSCommandProcessor.ts 类中
-public getTransformCommands(): TransformCommands {
-  return this.transformCommands;
-}
-
+  // 获取命令模块的访问器方法
 public getStackedLayersCommands(): StackedLayersCommands {
   return this.stackedLayersCommands;
+}
+
+public getTransformCommands(): TransformCommands {
+  return this.transformCommands;
 }
 
 public getWireMeshCommands(): WireMeshCommands {
   return this.wireMeshCommands;
 }
+
+  // 主命令处理方法
+public async processCommand(cmd: any): Promise<any> {
+  console.log(
+    "[ThreeJSCommandProcessor] 处理命令:",
+    cmd.id,
+    cmd.args
+  );
+
+  try {
+    // 根据命令类型分发到相应的处理模块
+    switch (cmd.id) {
+      // 模型命令
+      case "upload_stl":
+        return await this.modelCommands.uploadSTL(cmd.args.file);
+      case "create_cube":
+        return this.modelCommands.createCube(cmd.args.size);
+        
+      // 变换命令
+      case "rotate_model":
+        return this.transformCommands.rotateModel(cmd);
+      case "scale_model":
+        return this.transformCommands.scaleModel(cmd);
+      case "translate_model":
+        return this.transformCommands.translateModel(cmd);
+        
+      // 线框网格命令
+      case "initialize_wire_mesh":
+        return this.wireMeshCommands.initializeWireMesh();
+      case "add_horizontal_wire":
+        return this.wireMeshCommands.addHorizontalWire(
+          cmd.args.position,
+          cmd.args.thickness,
+          cmd.args.color
+        );
+      case "add_vertical_wire":
+        return this.wireMeshCommands.addVerticalWire(
+          cmd.args.position,
+          cmd.args.thickness,
+          cmd.args.color
+        );
+      case "convert_to_tubes":
+        return this.wireMeshCommands.convertToTubes(cmd.args.thickness);
+      case "collect_wire_mesh":
+        return this.wireMeshCommands.collectWireMesh();
+      case "generate_wire_mesh":
+        return await this.wireMeshCommands.generateWireMesh(cmd);
+      case "export_wire_csv":
+        return await this.wireMeshCommands.exportWireCSV(cmd);
+        
+      // 层叠切片命令
+      case "generate_stacked_layers":
+        return await this.stackedLayersCommands.generateStackedLayers(cmd);
+      case "export_stacked_layers_svg":
+        return this.stackedLayersCommands.exportStackedLayersSVG(cmd);
+        
+      // 编程逻辑命令
+      case "variable_declaration":
+        return this.programmingCommands.handleVariableDeclaration(cmd);
+      case "for_loop":
+        return await this.programmingCommands.handleForLoop(cmd);
+      case "if_statement":
+        return await this.programmingCommands.handleIfStatement(cmd);
+        
+      // 可视化命令
+      case "show_in_viewer":
+        return await this.visualizationCommands.showInViewer(cmd);
+      case "clear_scene":
+        return this.visualizationCommands.clearScene();
+        
+      default:
+        console.warn("[ThreeJSCommandProcessor] 未知命令:", cmd.id);
+        return null;
+    }
+  } catch (error) {
+    console.error(
+      "[ThreeJSCommandProcessor] 处理命令时出错:",
+      cmd.id,
+      error
+    );
+    return null;
+  }
+}
+
+  // 检查是否需要执行状态更新 - 在渲染循环中调用
+  public checkStateUpdates(): void {
+    // 检查层叠切片是否需要重新生成
+    this.stackedLayersCommands.checkNeedRegenerate();
+  }
+
   // 清理方法
   public clearState(): void {
     // 清理存储的对象引用
@@ -184,7 +200,7 @@ public getWireMeshCommands(): WireMeshCommands {
     }
 
     console.log(
-      "[ThreeJSCommandProcessor] State cleared, including control panel"
+      "[ThreeJSCommandProcessor] 状态已清理，包括控制面板"
     );
   }
 }
