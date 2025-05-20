@@ -98,57 +98,85 @@ export function getWireMeshBlockDefinitions(codeGenerator: any) {
       },
     },
     
+   // 修改水平线块定义
     "add_horizontal_wire": {
       category: null,
       definition: {
         init: function () {
           this.appendDummyInput()
             .appendField("Add Horizontal Wire");
+          
+          // 添加位置值输入连接点而不是字段
+          this.appendValueInput("POSITION")
+            .setCheck("Number")
+            .appendField("at position:");
+            
           this.appendDummyInput()
-            .appendField("at:")
-            .appendField(new Blockly.FieldNumber(0), "POSITION")
             .appendField("thickness:")
             .appendField(new Blockly.FieldNumber(0.5, 0.1, 5, 0.1), "THICKNESS")
             .appendField("color:")
             .appendField(new Blockly.FieldColour("#ff0000"), "COLOR");
+            
           this.setPreviousStatement(true, null);
           this.setNextStatement(true, null);
+          this.setInputsInline(true); // 使块更紧凑
+          this.setTooltip("Add a horizontal wire at the specified position");
         },
       },
       generator: function (block: any) {
-        const position = parseFloat(block.getFieldValue("POSITION"));
+        // 从值输入获取位置
+        const position = codeGenerator.valueToCode(block, "POSITION", 0) || "0";
         const thickness = parseFloat(block.getFieldValue("THICKNESS"));
         const color = block.getFieldValue("COLOR");
         
-        const cmd = new Command("add_horizontal_wire", { position, thickness, color }, [], {});
+        const cmd = new Command("add_horizontal_wire", { 
+          position, // 可以是变量名或数值表达式
+          thickness, 
+          color 
+        }, [], {});
+        
         scope.push(cmd);
         return "";
       },
     },
     
+    // 修改垂直线块定义
     "add_vertical_wire": {
       category: null,
       definition: {
         init: function () {
           this.appendDummyInput()
             .appendField("Add Vertical Wire");
+            
+          // 添加位置值输入连接点而不是字段
+          this.appendValueInput("POSITION")
+            .setCheck("Number")
+            .appendField("at position:");
+            
           this.appendDummyInput()
-            .appendField("at:")
-            .appendField(new Blockly.FieldNumber(0), "POSITION")
             .appendField("thickness:")
             .appendField(new Blockly.FieldNumber(0.5, 0.1, 5, 0.1), "THICKNESS")
             .appendField("color:")
             .appendField(new Blockly.FieldColour("#00ff00"), "COLOR");
+            
           this.setPreviousStatement(true, null);
           this.setNextStatement(true, null);
+          this.setInputsInline(true); // 使块更紧凑
+          this.setTooltip("Add a vertical wire at the specified position");
         },
       },
       generator: function (block: any) {
-        const position = parseFloat(block.getFieldValue("POSITION"));
+        // 从值输入获取位置
+        const position = codeGenerator.valueToCode(block, "POSITION", 0) || "0";
         const thickness = parseFloat(block.getFieldValue("THICKNESS"));
         const color = block.getFieldValue("COLOR");
         
-        const cmd = new Command("add_vertical_wire", { position, thickness, color }, [], {});
+        const cmd = new Command("add_vertical_wire", { 
+          position, // 可以是变量名或数值表达式
+          thickness, 
+          color 
+        }, [], {});
+        
         scope.push(cmd);
         return "";
       },

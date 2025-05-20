@@ -54,139 +54,194 @@ export class WireMeshCommands {
     console.log("[initializeWireMesh] Started new wire mesh definition");
   }
 
-  /**
-   * 添加水平线
-   */
-  public addHorizontalWire(
-    position: number,
-    thickness: number,
-    color: string
-  ): void {
-    if (!this.wireMeshContext.isGenerating) {
-      console.error("[addHorizontalWire] No active wire mesh generation");
-      return;
-    }
 
-    // 获取当前模型
-    const objectId = scope.context["_currentObjectId"];
-    const model = this.processor.getObject(objectId);
 
-    if (!model || !(model instanceof THREE.Mesh)) {
-      console.error("[addHorizontalWire] No valid model found");
-      return;
-    }
-
-    // 计算边界盒和实际Y位置
-    const boundingBox = new THREE.Box3().setFromObject(model);
-    const yPosition = boundingBox.min.y + position;
-
-    // 查找与模型的交点
-    const intersectionPoints = this.findHorizontalIntersectionPoints(
-      model,
-      yPosition
-    );
-
-    if (intersectionPoints.length < 3) {
-      console.error("[addHorizontalWire] Not enough intersection points found");
-      return;
-    }
-
-    // 存储线信息 - 默认为线(非管)
-    const wireId = this.wireMeshContext.currentWireId++;
-    this.wireMeshContext.wires.push({
-      type: "horizontal",
-      position,
-      thickness,
-      color,
-      points: intersectionPoints,
-      isLine: true, // 默认为线，可以后续转换为管
-    });
-
-    // 创建预览线
-    const lineGeometry = new THREE.BufferGeometry().setFromPoints(
-      intersectionPoints
-    );
-    const lineMaterial = new THREE.LineBasicMaterial({
-      color: parseInt(color.replace("#", "0x")),
-      linewidth: 1,
-    });
-    const line = new THREE.Line(lineGeometry, lineMaterial);
-
-    // 存储为临时对象
-    const id = `wire_component_${wireId}`;
-    this.processor.addObject(id, line);
-
-    console.log(
-      `[addHorizontalWire] Added at position=${position} with thickness=${thickness}, ID=${id}`
-    );
+/**
+ * 添加水平线
+ */
+public addHorizontalWire(
+  position: any, // 修改为any类型，以接受变量名或数值
+  thickness: number,
+  color: string
+): void {
+  if (!this.wireMeshContext.isGenerating) {
+    console.error("[addHorizontalWire] No active wire mesh generation");
+    return;
   }
 
-  /**
-   * 添加垂直线
-   */
-  public addVerticalWire(
-    position: number,
-    thickness: number,
-    color: string
-  ): void {
-    if (!this.wireMeshContext.isGenerating) {
-      console.error("[addVerticalWire] No active wire mesh generation");
-      return;
-    }
+  // 获取当前模型
+  const objectId = scope.context["_currentObjectId"];
+  const model = this.processor.getObject(objectId);
 
-    // 获取当前模型
-    const objectId = scope.context["_currentObjectId"];
-    const model = this.processor.getObject(objectId);
-
-    if (!model || !(model instanceof THREE.Mesh)) {
-      console.error("[addVerticalWire] No valid model found");
-      return;
-    }
-
-    // 计算边界盒和实际Z位置
-    const boundingBox = new THREE.Box3().setFromObject(model);
-    const zPosition = boundingBox.min.z + position;
-
-    // 查找与模型的交点
-    const intersectionPoints = this.findVerticalIntersectionPoints(
-      model,
-      zPosition
-    );
-
-    if (intersectionPoints.length < 3) {
-      console.error("[addVerticalWire] Not enough intersection points found");
-      return;
-    }
-
-    // 存储线信息
-    const wireId = this.wireMeshContext.currentWireId++;
-    this.wireMeshContext.wires.push({
-      type: "vertical",
-      position,
-      thickness,
-      color,
-      points: intersectionPoints,
-      isLine: true,
-    });
-
-    // 创建预览线
-    const lineGeometry = new THREE.BufferGeometry().setFromPoints(
-      intersectionPoints
-    );
-    const lineMaterial = new THREE.LineBasicMaterial({
-      color: parseInt(color.replace("#", "0x")),
-      linewidth: 1,
-    });
-    const line = new THREE.Line(lineGeometry, lineMaterial);
-
-    // 存储为临时对象
-    const id = `wire_component_${wireId}`;
-    this.processor.addObject(id, line);
-
-    console.log(
-      `[addVerticalWire] Added at position=${position} with thickness=${thickness}, ID=${id}`
-    );
+  if (!model || !(model instanceof THREE.Mesh)) {
+    console.error("[addHorizontalWire] No valid model found");
+    return;
   }
+
+  // 处理position参数，支持变量和表达式
+  let positionValue: number;
+  
+  if (typeof position === 'string') {
+    // 检查是否是变量引用
+    if (scope.context[position] !== undefined) {
+      // 是变量名，从scope中获取值
+      positionValue = scope.context[position];
+      console.log(`[addHorizontalWire] Using variable ${position} = ${positionValue}`);
+    } else {
+      // 尝试作为表达式求值
+      try {
+        // 安全地求值表达式（可能需要更复杂的实现）
+        positionValue = eval(position);
+        console.log(`[addHorizontalWire] Evaluated expression ${position} = ${positionValue}`);
+      } catch (e) {
+        console.error(`[addHorizontalWire] Failed to evaluate position: ${position}`, e);
+        positionValue = 0; // 默认值
+      }
+    }
+  } else {
+    // 直接数值
+    positionValue = parseFloat(position);
+    console.log(`[addHorizontalWire] Using direct position value: ${positionValue}`);
+  }
+
+  // 计算边界盒和实际Y位置
+  const boundingBox = new THREE.Box3().setFromObject(model);
+  const yPosition = boundingBox.min.y + positionValue;
+
+  // 其余代码保持不变...
+  // 查找与模型的交点
+  const intersectionPoints = this.findHorizontalIntersectionPoints(
+    model,
+    yPosition
+  );
+
+  if (intersectionPoints.length < 3) {
+    console.warn("[addHorizontalWire] Not enough intersection points found");
+    return;
+  }
+
+  // 存储线信息
+  const wireId = this.wireMeshContext.currentWireId++;
+  this.wireMeshContext.wires.push({
+    type: "horizontal",
+    position: positionValue, // 使用解析后的值
+    thickness,
+    color,
+    points: intersectionPoints,
+    isLine: true,
+  });
+
+  // 创建线预览
+  const lineGeometry = new THREE.BufferGeometry().setFromPoints(
+    intersectionPoints
+  );
+  const lineMaterial = new THREE.LineBasicMaterial({
+    color: parseInt(color.replace("#", "0x")),
+    linewidth: 1,
+  });
+  const line = new THREE.Line(lineGeometry, lineMaterial);
+
+  // 存储为临时对象
+  const id = `wire_component_${wireId}`;
+  this.processor.addObject(id, line);
+
+  console.log(
+    `[addHorizontalWire] Added at position=${positionValue} with thickness=${thickness}, ID=${id}`
+  );
+}
+
+/**
+ * 添加垂直线
+ */
+public addVerticalWire(
+  position: any, // 修改为any类型，以接受变量名或数值
+  thickness: number,
+  color: string
+): void {
+  if (!this.wireMeshContext.isGenerating) {
+    console.error("[addVerticalWire] No active wire mesh generation");
+    return;
+  }
+
+  // 获取当前模型
+  const objectId = scope.context["_currentObjectId"];
+  const model = this.processor.getObject(objectId);
+
+  if (!model || !(model instanceof THREE.Mesh)) {
+    console.error("[addVerticalWire] No valid model found");
+    return;
+  }
+
+  // 处理position参数，支持变量和表达式
+  let positionValue: number;
+  
+  if (typeof position === 'string') {
+    // 检查是否是变量引用
+    if (scope.context[position] !== undefined) {
+      // 是变量名，从scope中获取值
+      positionValue = scope.context[position];
+      console.log(`[addVerticalWire] Using variable ${position} = ${positionValue}`);
+    } else {
+      // 尝试作为表达式求值
+      try {
+        // 安全地求值表达式（可能需要更复杂的实现）
+        positionValue = eval(position);
+        console.log(`[addVerticalWire] Evaluated expression ${position} = ${positionValue}`);
+      } catch (e) {
+        console.error(`[addVerticalWire] Failed to evaluate position: ${position}`, e);
+        positionValue = 0; // 默认值
+      }
+    }
+  } else {
+    // 直接数值
+    positionValue = parseFloat(position);
+    console.log(`[addVerticalWire] Using direct position value: ${positionValue}`);
+  }
+
+  // 计算边界盒和实际Z位置
+  const boundingBox = new THREE.Box3().setFromObject(model);
+  const zPosition = boundingBox.min.z + positionValue;
+
+  // 查找与模型的交点
+  const intersectionPoints = this.findVerticalIntersectionPoints(
+    model,
+    zPosition
+  );
+
+  if (intersectionPoints.length < 3) {
+    console.warn("[addVerticalWire] Not enough intersection points found");
+    return;
+  }
+
+  // 存储线信息
+  const wireId = this.wireMeshContext.currentWireId++;
+  this.wireMeshContext.wires.push({
+    type: "vertical",
+    position: positionValue, // 使用解析后的值
+    thickness,
+    color,
+    points: intersectionPoints,
+    isLine: true,
+  });
+
+  // 创建线预览
+  const lineGeometry = new THREE.BufferGeometry().setFromPoints(
+    intersectionPoints
+  );
+  const lineMaterial = new THREE.LineBasicMaterial({
+    color: parseInt(color.replace("#", "0x")),
+    linewidth: 1,
+  });
+  const line = new THREE.Line(lineGeometry, lineMaterial);
+
+  // 存储为临时对象
+  const id = `wire_component_${wireId}`;
+  this.processor.addObject(id, line);
+
+  console.log(
+    `[addVerticalWire] Added at position=${positionValue} with thickness=${thickness}, ID=${id}`
+  );
+}
 
   /**
    * 转换为管

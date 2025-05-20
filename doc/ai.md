@@ -492,3 +492,300 @@ if 条件语句
 优化层叠激光切割功能
 添加更多的变换和编辑操作
 实现模型的导入/导出功能
+
+
+
+
+# CAMblock 块设计架构指南
+
+## 灵活块架构的最佳实践
+
+本文档描述了 CAMblock 项目中块设计的最佳实践，特别是如何实现灵活的、支持变量的块设计模式。这种设计模式允许块接受动态值（变量或表达式）作为输入，而不仅仅是硬编码的固定值。
+
+### 设计原则
+
+1. **灵活的参数输入**：块应该支持变量和表达式作为输入，而不仅仅是固定的字段值
+2. **双向数据绑定**：块的状态应该与控制面板和3D视图保持同步
+3. **可编程性**：支持循环、条件和变量等编程结构控制块的行为
+4. **清晰的视觉设计**：块的外观应该直观地表明哪些参数可以是变量
+
+### 块定义结构
+
+以下是一个支持变量输入的块定义模板：
+
+```typescript
+"block_name": {
+  category: null,  // 在ThreeJSBlocks.ts中设置
+  definition: {
+    init: function () {
+      // 块的标题
+      this.appendDummyInput()
+        .appendField("Block Title");
+      
+      // 参数A：使用输入连接点而不是固定字段
+      this.appendValueInput("PARAM_A")
+        .setCheck("Number")  // 限制输入类型
+        .appendField("Parameter A:");
+      
+      // 参数B：仍然使用固定字段（不需要变量输入的场景）
+      this.appendDummyInput()
+        .appendField("Parameter B:")
+        .appendField(new Blockly.FieldNumber(0.5, 0, 10, 0.1), "PARAM_B");
+      
+      // 设置块的连接和外观
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setInputsInline(true);  // 使块更紧凑
+      this.setTooltip("Block description...");
+    },
+  },
+  generator: function (block: any) {
+    // 从输入连接点获取参数A（可以是变量或表达式）
+    const paramA = codeGenerator.valueToCode(block, "PARAM_A", 0) || "0";
+    
+    // 从字段获取参数B（固定值）
+    const paramB = parseFloat(block.getFieldValue("PARAM_B"));
+    
+    // 创建命令对象
+    const cmd = new Command("block_name", { 
+      paramA,  // 可能是变量名或表达式
+      paramB 
+    }, [], {});
+    
+    scope.push(cmd);
+    return "";
+  },
+}
+```
+
+### 命令处理器实现
+
+对应的命令处理器方法应该能够处理变量形式的参数：
+
+```typescript
+/**
+ * 处理块命令
+ */
+public processBlockCommand(
+  paramA: any,  // 使用any类型接受变量名或直接数值
+  paramB: number
+): void {
+  // 处理paramA，支持变量和表达式
+  let paramAValue: number;
+  
+  if (typeof paramA === 'string') {
+    // 检查是否是变量引用
+    if (scope.context[paramA] !== undefined) {
+      // 从scope中获取变量值
+      paramAValue = scope.context[paramA];
+      console.log(`Using variable ${paramA} = ${paramAValue}`);
+    } else {
+      // 尝试作为表达式求值
+      try {
+        paramAValue = eval(paramA);
+        console.log(`Evaluated expression ${paramA} = ${paramAValue}`);
+      } catch (e) {
+        console.error(`Failed to evaluate expression: ${paramA}`, e);
+        paramAValue = 0; // 默认值
+      }
+    }
+  } else {
+    // 直接数值
+    paramAValue = parseFloat(paramA);
+  }
+
+  // 现在可以使用解析后的paramAValue进行操作
+  // ...其余处理逻辑
+}
+```
+
+## 具体实现案例：线框网格
+
+以下是`add_horizontal_wire`和`add_vertical_wire`块的完整实现，展示了如何在实际项目中应用这些最佳实践。
+
+### 1. 块定义
+
+```typescript
+// WireMeshBlockDefinitions.ts
+
+"add_horizontal_wire": {
+  category: null,
+  definition: {
+    init: function () {
+      this.appendDummyInput()
+        .appendField("Add Horizontal Wire");
+      
+      // 使用值输入连接点接受变量
+      this.appendValueInput("POSITION")
+        .setCheck("Number")
+        .appendField("at position:");
+        
+      this.appendDummyInput()
+        .appendField("thickness:")
+        .appendField(new Blockly.FieldNumber(0.5, 0.1, 5, 0.1), "THICKNESS")
+        .appendField("color:")
+        .appendField(new Blockly.FieldColour("#ff0000"), "COLOR");
+        
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setInputsInline(true);
+      this.setTooltip("Add a horizontal wire at the specified position");
+    },
+  },
+  generator: function (block: any) {
+    const position = codeGenerator.valueToCode(block, "POSITION", 0) || "0";
+    const thickness = parseFloat(block.getFieldValue("THICKNESS"));
+    const color = block.getFieldValue("COLOR");
+    
+    const cmd = new Command("add_horizontal_wire", { 
+      position,
+      thickness, 
+      color 
+    }, [], {});
+    
+    scope.push(cmd);
+    return "";
+  },
+}
+```
+
+### 2. 命令处理器
+
+```typescript
+// WireMeshCommands.ts
+
+public addHorizontalWire(
+  position: any,
+  thickness: number,
+  color: string
+): void {
+  // ...初始检查代码...
+
+  // 处理position参数，支持变量和表达式
+  let positionValue: number;
+  
+  if (typeof position === 'string') {
+    // 检查是否是变量引用
+    if (scope.context[position] !== undefined) {
+      positionValue = scope.context[position];
+    } else {
+      // 尝试作为表达式求值
+      try {
+        positionValue = eval(position);
+      } catch (e) {
+        console.error(`Failed to evaluate position: ${position}`, e);
+        positionValue = 0;
+      }
+    }
+  } else {
+    positionValue = parseFloat(position);
+  }
+
+  // 使用解析后的positionValue继续处理
+  // ...其余实现代码...
+}
+```
+
+### 3. 示例代码
+
+```javascript
+// 编程线框网格示例
+
+const programmatic_wire_mesh_example = {
+  blocks: {
+    // ...
+    block: {
+      type: "for_loop",
+      fields: {
+        VAR_NAME: "i",
+        FROM: 0,
+        TO: 10,
+        STEP: 1
+      },
+      inputs: {
+        DO: {
+          block: {
+            type: "variable_declaration",
+            fields: {
+              VAR_NAME: "wirePos",
+            },
+            inputs: {
+              VALUE: {
+                block: {
+                  type: "math_operation",
+                  fields: {
+                    OP: "MULTIPLY"
+                  },
+                  inputs: {
+                    A: {
+                      block: {
+                        type: "variable_get",
+                        fields: {
+                          VAR_NAME: "i"
+                        }
+                      }
+                    },
+                    B: {
+                      block: {
+                        type: "number",
+                        fields: {
+                          NUM: 10
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            next: {
+              block: {
+                type: "add_horizontal_wire",
+                fields: {
+                  THICKNESS: 0.5,
+                  COLOR: "#ff0000"
+                },
+                inputs: {
+                  // 使用变量作为位置输入
+                  POSITION: {
+                    block: {
+                      type: "variable_get",
+                      fields: {
+                        VAR_NAME: "wirePos"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    // ...
+  }
+};
+```
+
+## 设计更灵活块的步骤总结
+
+1. **识别需要变量输入的参数**：思考哪些参数会从动态计算或用户定义的变量中受益
+
+2. **修改块定义**：
+   - 将固定字段改为值输入连接点
+   - 使用`appendValueInput()`而不是在`appendDummyInput()`中添加字段
+   - 设置适当的输入类型检查（如`setCheck("Number")`）
+
+3. **更新命令生成器**：
+   - 使用`codeGenerator.valueToCode()`获取输入值
+   - 将这些值传递给命令对象
+
+4. **修改命令处理器**：
+   - 增强处理方法以支持变量和表达式
+   - 添加变量解析和表达式求值逻辑
+   - 使用解析后的值执行实际操作
+
+5. **创建展示样例**：
+   - 开发示例代码展示如何使用变量和编程结构
+   - 确保示例清晰展示这种新的灵活性的优势
+
+通过遵循这些最佳实践，CAMblock 项目可以实现更灵活、更强大的块设计，使用户能够创建更复杂、更动态的3D模型和操作。
