@@ -131,114 +131,184 @@
       }
     }
   },
-  "3D Model": {
-    "id": "model_3d",
-    "blocks": {
-      "load_stl": {
-        "title": "Load STL",
-        "arg": [
-          {
-            "name": "filename",
-            "type": "str",
-            "value": "default.stl"
-          }
-        ]
-      },
-      "upload_stl": {
-        "title": "Upload STL",
-        "arg": []
-      },
-      "create_cube": {
-        "title": "Create Cube",
-        "arg": [
-          {
-            "name": "size",
-            "type": "num",
-            "value": "50"
-          }
-        ]
-      },
-      "create_sphere": {
-        "title": "Create Sphere",
-        "arg": [
-          {
-            "name": "radius",
-            "type": "num",
-            "value": "25"
-          }
-        ]
-      }
+"3D Model": {
+  "id": "model_3d",
+  "blocks": {
+    "load_stl": {
+      "title": "Load STL",
+      "arg": [
+        {
+          "name": "filename",
+          "type": "str",
+          "value": "default.stl"
+        }
+      ]
+    },
+    "upload_stl": {
+      "title": "Upload STL",
+      "arg": []
+    },
+    "create_cube": {
+      "title": "Create Cube",
+      "arg": [
+        {
+          "name": "size",
+          "type": "num",
+          "value": "50"
+        }
+      ]
+    },
+    "create_sphere": {
+      "title": "Create Sphere",
+      "arg": [
+        {
+          "name": "radius",
+          "type": "num",
+          "value": "25"
+        }
+      ]
+    },
+    "calculate_bounds": {
+      "title": "Calculate Object Bounds",
+      "arg": []
+    },
+    "generate_contour": {
+      "title": "Generate Contour",
+      "isStatementBlock": true,
+      "arg": [
+        { "name": "height", "type": "num", "value": "0" },
+        { "name": "concavity", "type": "num", "value": "20" }
+      ]
+    },
+    "calculate_intersection": {
+      "title": "Calculate Intersection",
+      "isStatementBlock": true,
+      "arg": [
+        { 
+          "name": "planeAxis", 
+          "type": "dropdown", 
+          "options": ["X", "Y", "Z"],
+          "value": "Y"
+        },
+        { "name": "planeValue", "type": "num", "value": "0" }
+      ]
     }
-  },
-  "Transforms": {
-    "id": "transforms",
-    "blocks": {
-      "rotate_model": {
-        "title": "Rotate Model",
-        "arg": [
-          {
-            "name": "rotate_x",
-            "type": "num",
-            "value": "0"
-          },
-          {
-            "name": "rotate_y",
-            "type": "num",
-            "value": "0"
-          },
-          {
-            "name": "rotate_z",
-            "type": "num",
-            "value": "0"
-          }
-        ]
-      },
-      "scale_model": {
-        "title": "Scale Model",
-        "arg": [
-          {
-            "name": "scale",
-            "type": "num",
-            "value": "1"
-          }
-        ]
-      },
-      "translate_model": {
-        "title": "Translate Model",
-        "arg": [
-          {
-            "name": "translate_x",
-            "type": "num",
-            "value": "0"
-          },
-          {
-            "name": "translate_y",
-            "type": "num",
-            "value": "0"
-          },
-          {
-            "name": "translate_z",
-            "type": "num",
-            "value": "0"
-          }
-        ]
-      }
+  }
+},
+"Transforms": {
+  "id": "transforms",
+  "blocks": {
+    "rotate_model": {
+      "title": "Rotate Model",
+      "arg": [
+        {
+          "name": "rotate_x",
+          "type": "num",
+          "value": "0"
+        },
+        {
+          "name": "rotate_y",
+          "type": "num",
+          "value": "0"
+        },
+        {
+          "name": "rotate_z",
+          "type": "num",
+          "value": "0"
+        }
+      ]
+    },
+    "scale_model": {
+      "title": "Scale Model",
+      "arg": [
+        {
+          "name": "scale",
+          "type": "num",
+          "value": "1"
+        }
+      ]
+    },
+    "translate_model": {
+      "title": "Translate Model",
+      "arg": [
+        {
+          "name": "translate_x",
+          "type": "num",
+          "value": "0"
+        },
+        {
+          "name": "translate_y",
+          "type": "num",
+          "value": "0"
+        },
+        {
+          "name": "translate_z",
+          "type": "num",
+          "value": "0"
+        }
+      ]
+    },
+    "create_custom_control": {
+      "title": "Create Custom Control",
+      "arg": [
+        { "name": "label", "type": "str", "value": "My Control" },
+        { 
+          "name": "controlType", 
+          "type": "dropdown", 
+          "options": ["SLIDER", "NUMBER", "CHECKBOX"],
+          "value": "SLIDER"
+        },
+        { "name": "initialValue", "type": "num", "value": "0" },
+        { "name": "varName", "type": "str", "value": "control_value" }
+      ]
     }
-  },
-  "Visualization": {
-    "id": "visualization",
-    "blocks": {
-      "show_in_viewer": {
-        "title": "Show in 3D Viewer",
-        "isStatementBlock": true,
-        "arg": []
-      },
-      "clear_scene": {
-        "title": "Clear Scene",
-        "arg": []
-      }
+  }
+},
+"Visualization": {
+  "id": "visualization",
+  "blocks": {
+    "show_in_viewer": {
+      "title": "Show in 3D Viewer",
+      "isStatementBlock": true,
+      "arg": []
+    },
+    "clear_scene": {
+      "title": "Clear Scene",
+      "arg": []
+    },
+    "apply_material": {
+      "title": "Apply Material",
+      "isStatementBlock": true,
+      "arg": [
+        { 
+          "name": "materialType", 
+          "type": "dropdown", 
+          "options": ["STANDARD", "NORMAL", "WIREFRAME", "PHONG"],
+          "value": "STANDARD"
+        },
+        { "name": "color", "type": "color", "value": "#dddddd" }
+      ]
+    },
+    "show_object_dimensions": {
+      "title": "Show Object Dimensions",
+      "isStatementBlock": true,
+      "arg": []
+    },
+    "add_helper_object": {
+      "title": "Add Helper Object",
+      "isStatementBlock": true,
+      "arg": [
+        { 
+          "name": "helperType", 
+          "type": "dropdown", 
+          "options": ["BOUNDING_BOX", "GRID", "AXES", "EDGE_LINES"],
+          "value": "BOUNDING_BOX"
+        },
+        { "name": "color", "type": "color", "value": "#00ff00" }
+      ]
     }
-  },
+  }
+},
   "Stacked Layers": {
     "id": "stacked_layers",
     "blocks": {

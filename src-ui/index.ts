@@ -690,7 +690,182 @@ if (t1) {
         "info",
         0
       );
-    } 
+    } else if (cmd == "model_analysis_example") {
+      const exampleCode = {
+        blocks: {
+          languageVersion: 0,
+          blocks: [
+            {
+              type: "upload_stl",
+              fields: {
+                FILE_UPLOAD: "default.stl",
+              },
+              next: {
+                block: {
+                  type: "calculate_bounds",
+                  next: {
+                    block: {
+                      type: "show_in_viewer",
+                      next: {
+                        block: {
+                          type: "show_object_dimensions",
+                          next: {
+                            block: {
+                              type: "rotate_model",
+                              fields: {
+                                ROTATE_X: "0",
+                                ROTATE_Y: "45",
+                                ROTATE_Z: "0",
+                              },
+                              next: {
+                                block: {
+                                  type: "for_loop",
+                                  fields: {
+                                    VAR_NAME: "layer",
+                                    FROM: "0",
+                                    TO: "5",
+                                    STEP: "1",
+                                  },
+                                  inputs: {
+                                    DO: {
+                                      block: {
+                                        type: "variable_declaration",
+                                        fields: {
+                                          VAR_NAME: "sliceHeight",
+                                        },
+                                        inputs: {
+                                          VALUE: {
+                                            block: {
+                                              type: "math_operation",
+                                              fields: {
+                                                OP: "MULTIPLY",
+                                              },
+                                              inputs: {
+                                                A: {
+                                                  block: {
+                                                    type: "variable_get",
+                                                    fields: {
+                                                      VAR_NAME: "layer",
+                                                    },
+                                                  },
+                                                },
+                                                B: {
+                                                  block: {
+                                                    type: "number",
+                                                    fields: {
+                                                      NUM: "10",
+                                                    },
+                                                  },
+                                                },
+                                              },
+                                            },
+                                          },
+                                        },
+                                        next: {
+                                          block: {
+                                            type: "generate_contour",
+                                            fields: {
+                                              // 使用固定的高度值，而不是尝试连接变量
+                                              // 我们可以在后续改进这个示例
+                                              height: "10",
+                                              concavity: "20",
+                                            },
+                                            statement: {
+                                              OBJECT: {
+                                                block: {
+                                                  type: "upload_stl",
+                                                  fields: {
+                                                    FILE_UPLOAD: "default.stl",
+                                                  },
+                                                },
+                                              },
+                                            },
+                                          },
+                                        },
+                                      },
+                                    },
+                                  },
+                                  next: {
+                                    block: {
+                                      type: "add_helper_object",
+                                      fields: {
+                                        helperType: "BOUNDING_BOX",
+                                        color: "#00ff00",
+                                      },
+                                      statement: {
+                                        OBJECT: {
+                                          block: {
+                                            type: "upload_stl",
+                                            fields: {
+                                              FILE_UPLOAD: "default.stl",
+                                            },
+                                          },
+                                        },
+                                      },
+                                      next: {
+                                        block: {
+                                          type: "apply_material",
+                                          fields: {
+                                            materialType: "PHONG",
+                                            color: "#3366ff",
+                                          },
+                                          statement: {
+                                            OBJECT: {
+                                              block: {
+                                                type: "upload_stl",
+                                                fields: {
+                                                  FILE_UPLOAD: "default.stl",
+                                                },
+                                              },
+                                            },
+                                          },
+                                          next: {
+                                            block: {
+                                              type: "create_custom_control",
+                                              fields: {
+                                                label: "切片透明度",
+                                                controlType: "SLIDER",
+                                                initialValue: "70",
+                                                varName: "slice_opacity",
+                                              },
+                                              next: {
+                                                block: {
+                                                  type: "create_custom_control",
+                                                  fields: {
+                                                    label: "边界框可见性",
+                                                    controlType: "CHECKBOX",
+                                                    initialValue: "1",
+                                                    varName: "show_bounds",
+                                                  },
+                                                },
+                                              },
+                                            },
+                                          },
+                                        },
+                                      },
+                                    },
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      };
+      blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
+      statusBar.setStatus(
+        `加载了模型分析示例。点击"Render"查看结果。`,
+        "info",
+        0
+      );
+    }
   });
 
   // 添加工具栏按钮
@@ -746,7 +921,11 @@ if (t1) {
     "Stacked Layers Example"
   );
 
-
+  toolbar.addIcon(
+    "model_analysis_example",
+    `<span class="material-symbols-outlined">analytics</span>`,
+    "Utility Tools Example"
+  );
 }
 
 // 创建 3D 查看器
