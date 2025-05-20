@@ -6,35 +6,30 @@ import { moduleAdapter } from "../utils/ModuleAdapter";
 export function getUtilityBlockDefinitions(codeGenerator: any) {
   return {
     // === 几何计算块 ===
-    "calculate_bounds": {
-      category: null,
-      definition: {
-        init: function () {
-          this.appendDummyInput()
-            .appendField("Calculate Object Bounds");
-          this.appendStatementInput("OBJECT")
-            .setCheck(null)
-            .appendField("for object:");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setTooltip("Calculate the bounding box for an object");
-        },
-      },
-      generator: function (block: any) {
-        scope.newScope();
-        codeGenerator.statementToCode(block, "OBJECT");
-        const children = scope.scopeItem.items;
-        scope.popScope();
-
-        if (children && children.length > 0) {
-          children.forEach((child) => scope.push(child));
-        }
-
-        const cmd = new Command("calculate_bounds", {}, [], {});
-        scope.push(cmd);
-        return "";
-      },
+"calculate_bounds": {
+  category: null,
+  definition: {
+    init: function () {
+      this.appendDummyInput()
+        .appendField("Calculate Object Bounds");
+      // 使用 appendValueInput 而不是 appendStatementInput
+      this.appendValueInput("OBJECT")
+        .setCheck(null)
+        .appendField("for object:");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setTooltip("Calculate the bounding box for an object");
     },
+  },
+  generator: function (block: any) {
+    // 使用 valueToCode 而不是 statementToCode
+    const objectCode = codeGenerator.valueToCode(block, "OBJECT", 0) || "null";
+    
+    const cmd = new Command("calculate_bounds", { objectId: objectCode }, [], {});
+    scope.push(cmd);
+    return "";
+  },
+},
 
     "generate_contour": {
       category: null,

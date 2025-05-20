@@ -690,92 +690,7 @@ if (t1) {
         "info",
         0
       );
-    } else if (cmd == "utility_example") {
-  const exampleCode = {
-    blocks: {
-      languageVersion: 0,
-      blocks: [
-        {
-          type: "upload_stl",
-          fields: {
-            FILE_UPLOAD: "default.stl",
-          },
-          next: {
-            block: {
-              type: "show_object_dimensions",
-              inputs: {
-                OBJECT: {
-                  block: {
-                    type: "load_stl",
-                    fields: {
-                      FILENAME: "default.stl",
-                    },
-                  },
-                },
-              },
-              next: {
-                block: {
-                  type: "calculate_bounds",
-                  inputs: {
-                    OBJECT: {
-                      block: {
-                        type: "variable_get",
-                        fields: {
-                          VAR_NAME: "_currentObjectId",
-                        },
-                      },
-                    },
-                  },
-                  next: {
-                    block: {
-                      type: "add_helper_object",
-                      fields: {
-                        HELPER_TYPE: "BOUNDING_BOX",
-                        COLOR: "#00ff00",
-                      },
-                      inputs: {
-                        OBJECT: {
-                          block: {
-                            type: "variable_get",
-                            fields: {
-                              VAR_NAME: "_currentObjectId",
-                            },
-                          },
-                        },
-                      },
-                      next: {
-                        block: {
-                          type: "create_custom_control",
-                          fields: {
-                            LABEL: "Model Visibility",
-                            CONTROL_TYPE: "CHECKBOX",
-                            INITIAL_VALUE: 1,
-                            VAR_NAME: "model_visible",
-                          },
-                          next: {
-                            block: {
-                              type: "show_in_viewer"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      ]
-    }
-  };
-  blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
-  statusBar.setStatus(
-    `Loaded Utility Tools example. Click "Render" to see the result.`,
-    "info",
-    0
-  );
-}
+    } 
   });
 
   // 添加工具栏按钮
@@ -831,11 +746,7 @@ if (t1) {
     "Stacked Layers Example"
   );
 
-  toolbar.addIcon(
-    "utility_example",
-    `<span class="material-symbols-outlined">build</span>`,
-    "Utility Tools Example"
-  );
+
 }
 
 // 创建 3D 查看器

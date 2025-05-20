@@ -221,20 +221,23 @@ export function getProgrammingBlockDefinitions(codeGenerator: any) {
       },
     },
 
-    "variable_get": {
-      category: null,
-      definition: {
-        init: function () {
-          this.appendDummyInput()
-            .appendField("Get Variable")
-            .appendField(new Blockly.FieldTextInput("varName"), "VAR_NAME");
-          this.setOutput(true, null);
-          this.setTooltip("Get the value of a variable");
-        },
-      },
-      generator: function (block: any) {
-        const varName = block.getFieldValue("VAR_NAME");
-        return [varName, 0];
+"variable_get": {
+  category: null,
+  definition: {
+    init: function () {
+      this.appendDummyInput()
+        .appendField("Get Variable")
+        .appendField(new Blockly.FieldTextInput("varName"), "VAR_NAME");
+      this.setOutput(true, null);  // 设置为输出块
+      // 不应该有前置或后置连接
+      // this.setPreviousStatement(true, null);
+      // this.setNextStatement(true, null);
+      this.setTooltip("Get the value of a variable");
+    },
+  },
+  generator: function (block: any) {
+    const varName = block.getFieldValue("VAR_NAME");
+    return [varName, 0];  // 注意值块需要返回数组格式 [value, precedence]
       },
     }
   };
