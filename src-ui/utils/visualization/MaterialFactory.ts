@@ -340,12 +340,11 @@ export class MaterialFactory {
     material.dispose();
     
     // 从缓存中移除
-    for (const [key, cachedMaterial] of this.materialCache.entries()) {
-      if (cachedMaterial === material) {
-        this.materialCache.delete(key);
-        break;
-      }
-    }
+this.materialCache.forEach((cachedMaterial, key) => {
+  if (cachedMaterial === material) {
+    this.materialCache.delete(key);
+  }
+});
   }
 }
 
