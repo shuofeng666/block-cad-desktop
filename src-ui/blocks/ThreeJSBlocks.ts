@@ -9,6 +9,7 @@ import { getVisualizationBlockDefinitions } from "./VisualizationBlockDefinition
 import { getProgrammingBlockDefinitions } from "./ProgrammingBlockDefinitions";
 import { getTransformBlockDefinitions } from "./TransformBlockDefinitions";
 import { getModelBlockDefinitions } from "./ModelBlockDefinitions";
+import { getUtilityBlockDefinitions } from "./UtilityBlockDefinitions";
 
 export function registerThreeJSBlocks(
   codeGenerator: any,
@@ -21,6 +22,10 @@ export function registerThreeJSBlocks(
   const logicCategory = addToolboxCategory("Programming");
   const stackedLayersCategory = addToolboxCategory("Stacked Layers");
   const wireMeshCategory = addToolboxCategory("Wire Mesh");
+   // 添加新的工具类别
+  const utilityGeometryCategory = addToolboxCategory("Geometry Utils");
+  const utilityVisualizationCategory = addToolboxCategory("Visualization Utils");
+  const utilityInteractionCategory = addToolboxCategory("Interaction Utils");
 
   const wireMeshBlocks = getWireMeshBlockDefinitions(codeGenerator);
   const stackedLayersBlocks = getStackedLayersBlockDefinitions(codeGenerator);
@@ -28,6 +33,7 @@ export function registerThreeJSBlocks(
   const programmingBlocks = getProgrammingBlockDefinitions(codeGenerator);
   const transformBlocks = getTransformBlockDefinitions(codeGenerator);
   const modelBlocks = getModelBlockDefinitions(codeGenerator);
+   const utilityBlocks = getUtilityBlockDefinitions(codeGenerator);
 
   // 块定义
   const blockDefinitions = {
@@ -37,6 +43,7 @@ export function registerThreeJSBlocks(
     ...programmingBlocks,
     ...transformBlocks,
     ...modelBlocks,
+    ...utilityBlocks,
   };
 
   // 设置类别和颜色
@@ -92,6 +99,19 @@ export function registerThreeJSBlocks(
   setBlockCategoryAndColor("load_stl", modelCategory);
   setBlockCategoryAndColor("create_cube", modelCategory);
   setBlockCategoryAndColor("upload_stl", modelCategory);
+
+  // 设置几何工具块类别
+  blockDefinitions["calculate_bounds"].category = utilityGeometryCategory;
+  blockDefinitions["generate_contour"].category = utilityGeometryCategory;
+  blockDefinitions["calculate_intersection"].category = utilityGeometryCategory;
+  
+  // 设置可视化工具块类别
+  blockDefinitions["apply_material"].category = utilityVisualizationCategory;
+  blockDefinitions["show_object_dimensions"].category = utilityVisualizationCategory;
+  blockDefinitions["add_helper_object"].category = utilityVisualizationCategory;
+  
+  // 设置交互工具块类别
+  blockDefinitions["create_custom_control"].category = utilityInteractionCategory;
 
   // 注册所有块
   Object.entries(blockDefinitions).forEach(

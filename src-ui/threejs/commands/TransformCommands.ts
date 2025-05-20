@@ -407,7 +407,7 @@ export class TransformCommands {
    * 显示组合变换控件
    */
 // 修改 TransformCommands.ts 中的 showCombinedTransformControls 方法
-private showCombinedTransformControls(): void {
+public showCombinedTransformControls(): void {
   if (!this.controlPanel) {
     console.warn(
       "[showCombinedTransformControls] Control panel not available"

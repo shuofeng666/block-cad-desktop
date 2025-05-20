@@ -8,6 +8,7 @@ import { WireMeshCommands } from "./commands/WireMeshCommands";
 import { StackedLayersCommands } from "./commands/StackedLayersCommands";
 import { ProgrammingCommands } from "./commands/ProgrammingCommands";
 import { VisualizationCommands } from "./commands/VisualizationCommands";
+import { UtilityCommands } from "./commands/UtilityCommands";
 
 export class ThreeJSCommandProcessor {
   // 共享状态
@@ -24,6 +25,7 @@ export class ThreeJSCommandProcessor {
   private stackedLayersCommands: StackedLayersCommands;
   private programmingCommands: ProgrammingCommands;
   private visualizationCommands: VisualizationCommands;
+  private utilityCommands: UtilityCommands;
 
   
 
@@ -39,7 +41,7 @@ constructor(glViewer: any, controlPanel?: ControlPanel) {
   this.stackedLayersCommands = new StackedLayersCommands(this);
   this.programmingCommands = new ProgrammingCommands(this);
   this.visualizationCommands = new VisualizationCommands(this);
-  
+  this.utilityCommands = new UtilityCommands(this);
   // 将处理器引用传递给 GLViewer，以便它可以在合适的时间调用 checkStateUpdates
   if (glViewer) {
     glViewer.commandProcessor = this;
@@ -51,6 +53,9 @@ constructor(glViewer: any, controlPanel?: ControlPanel) {
     !!controlPanel
   );
 }
+
+
+
 
   // 共享访问器方法
   getScene(): THREE.Scene {
@@ -93,6 +98,11 @@ public getTransformCommands(): TransformCommands {
 public getWireMeshCommands(): WireMeshCommands {
   return this.wireMeshCommands;
 }
+
+// 添加访问器方法
+  public getUtilityCommands(): UtilityCommands {
+    return this.utilityCommands;
+  }
 
   // 主命令处理方法
 public async processCommand(cmd: any): Promise<any> {
@@ -162,6 +172,22 @@ public async processCommand(cmd: any): Promise<any> {
         return await this.visualizationCommands.showInViewer(cmd);
       case "clear_scene":
         return this.visualizationCommands.clearScene();
+
+        // 工具命令
+        case "calculate_bounds":
+          return this.utilityCommands.calculateBounds();
+        case "generate_contour":
+          return this.utilityCommands.generateContour(cmd.args);
+        case "calculate_intersection":
+          return this.utilityCommands.calculateIntersection(cmd.args);
+        case "apply_material":
+          return this.utilityCommands.applyMaterial(cmd.args);
+        case "show_object_dimensions":
+          return this.utilityCommands.showObjectDimensions();
+        case "add_helper_object":
+          return this.utilityCommands.addHelperObject(cmd.args);
+        case "create_custom_control":
+          return this.utilityCommands.createCustomControl(cmd.args);
         
       default:
         console.warn("[ThreeJSCommandProcessor] 未知命令:", cmd.id);
@@ -193,6 +219,9 @@ public async processCommand(cmd: any): Promise<any> {
     this.stackedLayersCommands.clearState();
     this.wireMeshCommands.clearState();
     this.transformCommands.clearState();
+
+    // 清理工具命令状态
+    this.utilityCommands.clearState();
     
     // 清理控制面板
     if (this.controlPanel) {

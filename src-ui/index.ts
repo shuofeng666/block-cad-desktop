@@ -52,7 +52,7 @@ Split([".left", ".right"], {
     // 延迟调用 resizeAll，防止过于频繁导致性能问题
     if (resizeTimeout) clearTimeout(resizeTimeout);
     resizeTimeout = setTimeout(resizeAll, 100);
-  }
+  },
 });
 
 let resizeTimeout: any = null;
@@ -258,49 +258,51 @@ if (t1) {
       blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
     }
     // 添加层叠切片示例
-else if (cmd == "stacked_layers_example") {
-  const exampleCode = {
-    blocks: {
-      languageVersion: 0,
-      blocks: [
-        {
-          type: "upload_stl",
-          fields: {
-            FILE_UPLOAD: "default.stl",
-          },
-          next: {
-            block: {
-              type: "rotate_model",
+    else if (cmd == "stacked_layers_example") {
+      const exampleCode = {
+        blocks: {
+          languageVersion: 0,
+          blocks: [
+            {
+              type: "upload_stl",
               fields: {
-                ROTATE_X: "0",
-                ROTATE_Y: "0",
-                ROTATE_Z: "0",
+                FILE_UPLOAD: "default.stl",
               },
               next: {
                 block: {
-                  type: "generate_stacked_layers",
+                  type: "rotate_model",
                   fields: {
-                    MATERIAL_THICKNESS: "3",
-                    // 移除 LAYER_COUNT 字段
-                  },
-                  inputs: {
-                    MODEL: {
-                      block: {
-                        type: "create_cube",
-                        fields: {
-                          SIZE: "50",
-                        },
-                      },
-                    },
+                    ROTATE_X: "0",
+                    ROTATE_Y: "0",
+                    ROTATE_Z: "0",
                   },
                   next: {
                     block: {
-                      type: "show_in_viewer",
+                      type: "generate_stacked_layers",
+                      fields: {
+                        MATERIAL_THICKNESS: "3",
+                        // 移除 LAYER_COUNT 字段
+                      },
+                      inputs: {
+                        MODEL: {
+                          block: {
+                            type: "create_cube",
+                            fields: {
+                              SIZE: "50",
+                            },
+                          },
+                        },
+                      },
                       next: {
                         block: {
-                          type: "export_stacked_layers_svg",
-                          fields: {
-                            FILENAME: "stacked_layer_example",
+                          type: "show_in_viewer",
+                          next: {
+                            block: {
+                              type: "export_stacked_layers_svg",
+                              fields: {
+                                FILENAME: "stacked_layer_example",
+                              },
+                            },
                           },
                         },
                       },
@@ -309,275 +311,206 @@ else if (cmd == "stacked_layers_example") {
                 },
               },
             },
-          },
+          ],
         },
-      ],
-    },
-  };
-  blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
-  statusBar.setStatus(
-    `Loaded Stacked Layers example. Click "Render" to see the result.`,
-    "info",
-    0
-  );
-}
-else if (cmd == "programmatic_wire_mesh_example") {
-  const exampleCode = {
- blocks: {
-      languageVersion: 0,
-      blocks: [
-        {
-          type: "upload_stl",
-          fields: {
-            FILE_UPLOAD: "default.stl",
-          },
-          next: {
-            block: {
-              type: "variable_declaration",
+      };
+      blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
+      statusBar.setStatus(
+        `Loaded Stacked Layers example. Click "Render" to see the result.`,
+        "info",
+        0
+      );
+    } else if (cmd == "programmatic_wire_mesh_example") {
+      const exampleCode = {
+        blocks: {
+          languageVersion: 0,
+          blocks: [
+            {
+              type: "upload_stl",
               fields: {
-                VAR_NAME: "horizWireCount",
-              },
-              inputs: {
-                VALUE: {
-                  block: {
-                    type: "number",
-                    fields: {
-                      NUM: 10
-                    }
-                  }
-                }
+                FILE_UPLOAD: "default.stl",
               },
               next: {
                 block: {
                   type: "variable_declaration",
                   fields: {
-                    VAR_NAME: "vertWireCount",
+                    VAR_NAME: "horizWireCount",
                   },
                   inputs: {
                     VALUE: {
                       block: {
                         type: "number",
                         fields: {
-                          NUM: 8
-                        }
-                      }
-                    }
+                          NUM: 10,
+                        },
+                      },
+                    },
                   },
                   next: {
                     block: {
                       type: "variable_declaration",
                       fields: {
-                        VAR_NAME: "modelHeight",
+                        VAR_NAME: "vertWireCount",
                       },
                       inputs: {
                         VALUE: {
                           block: {
                             type: "number",
                             fields: {
-                              NUM: 100
-                            }
-                          }
-                        }
+                              NUM: 8,
+                            },
+                          },
+                        },
                       },
                       next: {
                         block: {
                           type: "variable_declaration",
                           fields: {
-                            VAR_NAME: "modelWidth",
+                            VAR_NAME: "modelHeight",
                           },
                           inputs: {
                             VALUE: {
                               block: {
                                 type: "number",
                                 fields: {
-                                  NUM: 100
-                                }
-                              }
-                            }
+                                  NUM: 100,
+                                },
+                              },
+                            },
                           },
                           next: {
                             block: {
                               type: "variable_declaration",
                               fields: {
-                                VAR_NAME: "horizSpacing",
+                                VAR_NAME: "modelWidth",
                               },
                               inputs: {
                                 VALUE: {
                                   block: {
-                                    type: "math_operation",
+                                    type: "number",
                                     fields: {
-                                      OP: "DIVIDE"
+                                      NUM: 100,
                                     },
-                                    inputs: {
-                                      A: {
-                                        block: {
-                                          type: "variable_get",
-                                          fields: {
-                                            VAR_NAME: "modelHeight"
-                                          }
-                                        }
-                                      },
-                                      B: {
-                                        block: {
-                                          type: "math_operation",
-                                          fields: {
-                                            OP: "SUBTRACT"
-                                          },
-                                          inputs: {
-                                            A: {
-                                              block: {
-                                                type: "variable_get",
-                                                fields: {
-                                                  VAR_NAME: "horizWireCount"
-                                                }
-                                              }
-                                            },
-                                            B: {
-                                              block: {
-                                                type: "number",
-                                                fields: {
-                                                  NUM: 1
-                                                }
-                                              }
-                                            }
-                                          }
-                                        }
-                                      }
-                                    }
-                                  }
-                                }
+                                  },
+                                },
                               },
                               next: {
                                 block: {
                                   type: "variable_declaration",
                                   fields: {
-                                    VAR_NAME: "vertSpacing",
+                                    VAR_NAME: "horizSpacing",
                                   },
                                   inputs: {
                                     VALUE: {
                                       block: {
                                         type: "math_operation",
                                         fields: {
-                                          OP: "DIVIDE"
+                                          OP: "DIVIDE",
                                         },
                                         inputs: {
                                           A: {
                                             block: {
                                               type: "variable_get",
                                               fields: {
-                                                VAR_NAME: "modelWidth"
-                                              }
-                                            }
+                                                VAR_NAME: "modelHeight",
+                                              },
+                                            },
                                           },
                                           B: {
                                             block: {
                                               type: "math_operation",
                                               fields: {
-                                                OP: "SUBTRACT"
+                                                OP: "SUBTRACT",
                                               },
                                               inputs: {
                                                 A: {
                                                   block: {
                                                     type: "variable_get",
                                                     fields: {
-                                                      VAR_NAME: "vertWireCount"
-                                                    }
-                                                  }
+                                                      VAR_NAME:
+                                                        "horizWireCount",
+                                                    },
+                                                  },
                                                 },
                                                 B: {
                                                   block: {
                                                     type: "number",
                                                     fields: {
-                                                      NUM: 1
-                                                    }
-                                                  }
-                                                }
-                                              }
-                                            }
-                                          }
-                                        }
-                                      }
-                                    }
+                                                      NUM: 1,
+                                                    },
+                                                  },
+                                                },
+                                              },
+                                            },
+                                          },
+                                        },
+                                      },
+                                    },
                                   },
                                   next: {
                                     block: {
-                                      type: "initialize_wire_mesh",
+                                      type: "variable_declaration",
+                                      fields: {
+                                        VAR_NAME: "vertSpacing",
+                                      },
+                                      inputs: {
+                                        VALUE: {
+                                          block: {
+                                            type: "math_operation",
+                                            fields: {
+                                              OP: "DIVIDE",
+                                            },
+                                            inputs: {
+                                              A: {
+                                                block: {
+                                                  type: "variable_get",
+                                                  fields: {
+                                                    VAR_NAME: "modelWidth",
+                                                  },
+                                                },
+                                              },
+                                              B: {
+                                                block: {
+                                                  type: "math_operation",
+                                                  fields: {
+                                                    OP: "SUBTRACT",
+                                                  },
+                                                  inputs: {
+                                                    A: {
+                                                      block: {
+                                                        type: "variable_get",
+                                                        fields: {
+                                                          VAR_NAME:
+                                                            "vertWireCount",
+                                                        },
+                                                      },
+                                                    },
+                                                    B: {
+                                                      block: {
+                                                        type: "number",
+                                                        fields: {
+                                                          NUM: 1,
+                                                        },
+                                                      },
+                                                    },
+                                                  },
+                                                },
+                                              },
+                                            },
+                                          },
+                                        },
+                                      },
                                       next: {
                                         block: {
-                                          type: "for_loop",
-                                          fields: {
-                                            VAR_NAME: "i",
-                                            FROM: 0,
-                                            TO: 10, // 使用horizWireCount变量
-                                            STEP: 1
-                                          },
-                                          inputs: {
-                                            DO: {
-                                              block: {
-                                                type: "variable_declaration",
-                                                fields: {
-                                                  VAR_NAME: "wirePos",
-                                                },
-                                                inputs: {
-                                                  VALUE: {
-                                                    block: {
-                                                      type: "math_operation",
-                                                      fields: {
-                                                        OP: "MULTIPLY"
-                                                      },
-                                                      inputs: {
-                                                        A: {
-                                                          block: {
-                                                            type: "variable_get",
-                                                            fields: {
-                                                              VAR_NAME: "i"
-                                                            }
-                                                          }
-                                                        },
-                                                        B: {
-                                                          block: {
-                                                            type: "variable_get",
-                                                            fields: {
-                                                              VAR_NAME: "horizSpacing"
-                                                            }
-                                                          }
-                                                        }
-                                                      }
-                                                    }
-                                                  }
-                                                },
-                                                next: {
-                                                  block: {
-                                                    type: "add_horizontal_wire",
-                                                    // 不再设置固定POSITION字段
-                                                    fields: {
-                                                      THICKNESS: 0.5,
-                                                      COLOR: "#ff0000"
-                                                    },
-                                                    inputs: {
-                                                      // 连接wirePos变量到POSITION输入
-                                                      POSITION: {
-                                                        block: {
-                                                          type: "variable_get",
-                                                          fields: {
-                                                            VAR_NAME: "wirePos"
-                                                          }
-                                                        }
-                                                      }
-                                                    }
-                                                  }
-                                                }
-                                              }
-                                            }
-                                          },
+                                          type: "initialize_wire_mesh",
                                           next: {
                                             block: {
                                               type: "for_loop",
                                               fields: {
-                                                VAR_NAME: "j",
+                                                VAR_NAME: "i",
                                                 FROM: 0,
-                                                TO: 8, // 使用vertWireCount变量
-                                                STEP: 1
+                                                TO: 10, // 使用horizWireCount变量
+                                                STEP: 1,
                                               },
                                               inputs: {
                                                 DO: {
@@ -591,36 +524,37 @@ else if (cmd == "programmatic_wire_mesh_example") {
                                                         block: {
                                                           type: "math_operation",
                                                           fields: {
-                                                            OP: "MULTIPLY"
+                                                            OP: "MULTIPLY",
                                                           },
                                                           inputs: {
                                                             A: {
                                                               block: {
                                                                 type: "variable_get",
                                                                 fields: {
-                                                                  VAR_NAME: "j"
-                                                                }
-                                                              }
+                                                                  VAR_NAME: "i",
+                                                                },
+                                                              },
                                                             },
                                                             B: {
                                                               block: {
                                                                 type: "variable_get",
                                                                 fields: {
-                                                                  VAR_NAME: "vertSpacing"
-                                                                }
-                                                              }
-                                                            }
-                                                          }
-                                                        }
-                                                      }
+                                                                  VAR_NAME:
+                                                                    "horizSpacing",
+                                                                },
+                                                              },
+                                                            },
+                                                          },
+                                                        },
+                                                      },
                                                     },
                                                     next: {
                                                       block: {
-                                                        type: "add_vertical_wire",
+                                                        type: "add_horizontal_wire",
                                                         // 不再设置固定POSITION字段
                                                         fields: {
                                                           THICKNESS: 0.5,
-                                                          COLOR: "#00ff00"
+                                                          COLOR: "#ff0000",
                                                         },
                                                         inputs: {
                                                           // 连接wirePos变量到POSITION输入
@@ -628,42 +562,199 @@ else if (cmd == "programmatic_wire_mesh_example") {
                                                             block: {
                                                               type: "variable_get",
                                                               fields: {
-                                                                VAR_NAME: "wirePos"
-                                                              }
-                                                            }
-                                                          }
-                                                        }
-                                                      }
-                                                    }
-                                                  }
-                                                }
+                                                                VAR_NAME:
+                                                                  "wirePos",
+                                                              },
+                                                            },
+                                                          },
+                                                        },
+                                                      },
+                                                    },
+                                                  },
+                                                },
                                               },
                                               next: {
                                                 block: {
-                                                  type: "convert_to_tubes",
+                                                  type: "for_loop",
                                                   fields: {
-                                                    THICKNESS: 0.8
+                                                    VAR_NAME: "j",
+                                                    FROM: 0,
+                                                    TO: 8, // 使用vertWireCount变量
+                                                    STEP: 1,
+                                                  },
+                                                  inputs: {
+                                                    DO: {
+                                                      block: {
+                                                        type: "variable_declaration",
+                                                        fields: {
+                                                          VAR_NAME: "wirePos",
+                                                        },
+                                                        inputs: {
+                                                          VALUE: {
+                                                            block: {
+                                                              type: "math_operation",
+                                                              fields: {
+                                                                OP: "MULTIPLY",
+                                                              },
+                                                              inputs: {
+                                                                A: {
+                                                                  block: {
+                                                                    type: "variable_get",
+                                                                    fields: {
+                                                                      VAR_NAME:
+                                                                        "j",
+                                                                    },
+                                                                  },
+                                                                },
+                                                                B: {
+                                                                  block: {
+                                                                    type: "variable_get",
+                                                                    fields: {
+                                                                      VAR_NAME:
+                                                                        "vertSpacing",
+                                                                    },
+                                                                  },
+                                                                },
+                                                              },
+                                                            },
+                                                          },
+                                                        },
+                                                        next: {
+                                                          block: {
+                                                            type: "add_vertical_wire",
+                                                            // 不再设置固定POSITION字段
+                                                            fields: {
+                                                              THICKNESS: 0.5,
+                                                              COLOR: "#00ff00",
+                                                            },
+                                                            inputs: {
+                                                              // 连接wirePos变量到POSITION输入
+                                                              POSITION: {
+                                                                block: {
+                                                                  type: "variable_get",
+                                                                  fields: {
+                                                                    VAR_NAME:
+                                                                      "wirePos",
+                                                                  },
+                                                                },
+                                                              },
+                                                            },
+                                                          },
+                                                        },
+                                                      },
+                                                    },
                                                   },
                                                   next: {
                                                     block: {
-                                                      type: "collect_wire_mesh",
+                                                      type: "convert_to_tubes",
+                                                      fields: {
+                                                        THICKNESS: 0.8,
+                                                      },
                                                       next: {
                                                         block: {
-                                                          type: "show_in_viewer"
-                                                        }
-                                                      }
-                                                    }
-                                                  }
-                                                }
-                                              }
-                                            }
-                                          }
-                                        }
-                                      }
-                                    }
-                                  }
-                                }
-                              }
+                                                          type: "collect_wire_mesh",
+                                                          next: {
+                                                            block: {
+                                                              type: "show_in_viewer",
+                                                            },
+                                                          },
+                                                        },
+                                                      },
+                                                    },
+                                                  },
+                                                },
+                                              },
+                                            },
+                                          },
+                                        },
+                                      },
+                                    },
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      };
+      blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
+      statusBar.setStatus(
+        `Loaded Programmatic Wire Mesh example. Click "Render" to see the result.`,
+        "info",
+        0
+      );
+    } else if (cmd == "utility_example") {
+  const exampleCode = {
+    blocks: {
+      languageVersion: 0,
+      blocks: [
+        {
+          type: "upload_stl",
+          fields: {
+            FILE_UPLOAD: "default.stl",
+          },
+          next: {
+            block: {
+              type: "show_object_dimensions",
+              inputs: {
+                OBJECT: {
+                  block: {
+                    type: "load_stl",
+                    fields: {
+                      FILENAME: "default.stl",
+                    },
+                  },
+                },
+              },
+              next: {
+                block: {
+                  type: "calculate_bounds",
+                  inputs: {
+                    OBJECT: {
+                      block: {
+                        type: "variable_get",
+                        fields: {
+                          VAR_NAME: "_currentObjectId",
+                        },
+                      },
+                    },
+                  },
+                  next: {
+                    block: {
+                      type: "add_helper_object",
+                      fields: {
+                        HELPER_TYPE: "BOUNDING_BOX",
+                        COLOR: "#00ff00",
+                      },
+                      inputs: {
+                        OBJECT: {
+                          block: {
+                            type: "variable_get",
+                            fields: {
+                              VAR_NAME: "_currentObjectId",
+                            },
+                          },
+                        },
+                      },
+                      next: {
+                        block: {
+                          type: "create_custom_control",
+                          fields: {
+                            LABEL: "Model Visibility",
+                            CONTROL_TYPE: "CHECKBOX",
+                            INITIAL_VALUE: 1,
+                            VAR_NAME: "model_visible",
+                          },
+                          next: {
+                            block: {
+                              type: "show_in_viewer"
                             }
                           }
                         }
@@ -680,7 +771,7 @@ else if (cmd == "programmatic_wire_mesh_example") {
   };
   blockEditor.setBlocklyCode(JSON.stringify(exampleCode));
   statusBar.setStatus(
-    `Loaded Programmatic Wire Mesh example. Click "Render" to see the result.`,
+    `Loaded Utility Tools example. Click "Render" to see the result.`,
     "info",
     0
   );
@@ -739,6 +830,12 @@ else if (cmd == "programmatic_wire_mesh_example") {
     `<span class="material-symbols-outlined">layers</span>`,
     "Stacked Layers Example"
   );
+
+  toolbar.addIcon(
+    "utility_example",
+    `<span class="material-symbols-outlined">build</span>`,
+    "Utility Tools Example"
+  );
 }
 
 // 创建 3D 查看器
@@ -773,26 +870,27 @@ if (controlPanelElement) {
 // 注册所有块定义 - 先注册到 Blockly
 registerThreeJSBlocks(getCodeGenerator(), addToolboxCatogery);
 
-
 // 创建 Three.js 处理器（必须在 GLViewer 之后创建）
 const threeJSProcessor = new ThreeJSCommandProcessor(glViewer, controlPanel);
 
 // 窗口调整大小处理
 function resizeAll() {
   // 获取当前视图宽高
-  const leftPanel = document.querySelector('.left') as HTMLElement;
-  const rightPanel = document.querySelector('.right') as HTMLElement;
-  
+  const leftPanel = document.querySelector(".left") as HTMLElement;
+  const rightPanel = document.querySelector(".right") as HTMLElement;
+
   if (!leftPanel || !rightPanel) return;
-  
+
   // 确保两边都有合理的尺寸
   const leftWidth = leftPanel.offsetWidth;
   const leftHeight = leftPanel.offsetHeight;
   const rightWidth = rightPanel.offsetWidth;
   const rightHeight = rightPanel.offsetHeight;
-  
-  console.log(`Resizing: Left(${leftWidth}x${leftHeight}), Right(${rightWidth}x${rightHeight})`);
-  
+
+  console.log(
+    `Resizing: Left(${leftWidth}x${leftHeight}), Right(${rightWidth}x${rightHeight})`
+  );
+
   // 调整 BlocklyEditor
   if (blockEditor && leftWidth > 0 && leftHeight > 0) {
     try {
@@ -801,7 +899,7 @@ function resizeAll() {
       console.error("Error resizing BlocklyEditor:", e);
     }
   }
-  
+
   // 调整 GLViewer
   if (glViewer && rightWidth > 0 && rightHeight > 0) {
     try {
@@ -813,12 +911,16 @@ function resizeAll() {
 }
 
 // 改进窗口调整大小事件处理
-window.addEventListener("resize", function() {
-  // 清除之前的延迟调用
-  if (resizeTimeout) clearTimeout(resizeTimeout);
-  // 设置新的延迟调用
-  resizeTimeout = setTimeout(resizeAll, 200);
-}, false);
+window.addEventListener(
+  "resize",
+  function () {
+    // 清除之前的延迟调用
+    if (resizeTimeout) clearTimeout(resizeTimeout);
+    // 设置新的延迟调用
+    resizeTimeout = setTimeout(resizeAll, 200);
+  },
+  false
+);
 
 // 初始调整大小
 setTimeout(resizeAll, 500);
